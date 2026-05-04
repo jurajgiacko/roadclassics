@@ -1,14 +1,12 @@
-/* Game engine — Pálava MVP fáza 1 (rich skeleton).
-   Pridané v iterácii 1b:
-     - Multi-vrstvový parallax (sky, far hills, mid hills, vineyards, near trees)
-     - Pri-cestné objekty: vinice, stromy, moravské domčeky, kostolné veže,
-       dopravné značky s km markerom — všetko spawnuje a scrolluje
-     - Peloton (4 NPC cyklisti) v rôznych farbách dresov, relatívna rýchlosť
-       voči hráčovi
-     - Animácia šliapania (nohy + telo cyklistu)
-     - Segment label banner pri vstupe do nového segmentu
-     - Tap-to-start overlay ktorý čaká na prvý input
-   Stále NIE JE: plná energy/cadence logika (session 2), pickupy (session 3).
+/* Game engine — Pálava MVP (iterácia 1c: side-scroll Elasto Mania štýl).
+   Cyklista beží zľava doprava po krivke terénu odvodenej priamo
+   z monument.segments. Žiadna perspektíva, žiadne lane offsety —
+   všetko sa rieši v 2D world-space (worldX, worldY).
+
+   Zachované moduly:
+     - input.js, ui.js, monument.js — bez zmeny
+     - pickups.js — render staníc prepísaný pre bočný pohľad (drobnosť dolu)
+     - tactics.js — bez zmeny
 */
 (function () {
   const canvas = document.getElementById('game-canvas');
@@ -31,112 +29,149 @@
   }
   window.addEventListener('resize', resize);
 
+  /* ---- Camera + world units ----
+     1 worldX unit ≈ 1 logical px. Distance 8000 = 100% trate.
+     Camera sa drží tak, aby cyklista bol na 30 % viewW. */
+  const CYCLIST_FRAC_X = 0.32;
+  const cyclistScreenX = () => viewW * CYCLIST_FRAC_X;
+
+  /* World → screen */
+  function worldToScreenX(wx) { return cyclistScreenX() + (wx - state.distance); }
+
   /* ---- World state ---- */
   const state = {
     monument: null,
-    waiting: true,        // true = pre-start overlay still up
-    paused: false,        // tactic modal in progress
+    waiting: true,
+    paused: false,
     elapsed: 0,
     progressPct: 0,
-    distance: 0,          // virtual world units travelled (drives parallax)
+    distance: 0,
     cadence: 0,
     energy: 100,
-    speed: 0,             // 0..1.5 multiplier
-    pedalPhase: 0,        // 0..2π for leg animation
+    speed: 0,
+    pedalPhase: 0,
     activeSegment: null,
-    boostMul: 1,          // active short-term multiplier from pickup/tactic
+    boostMul: 1,
     boostUntil: 0,
-    stations: [],         // Enervit feed stations along the route
-    styleLog: []          // tactic choices for finish-screen style
+    stations: [],
+    styleLog: []
   };
 
-  /* ---- World objects (scrolling props) ----
-     Each has world-x in "units"; we render based on (worldX - state.distance)*parallax. */
-  const props = [];   // {kind, worldX, lane, ...details}
-  const peloton = []; // {worldX, lane, color, baseOffset}
+  /* ---- Terrain function ----
+     terrainY(worldX) returns screen-Y where ground meets sky.
+     Built from monument.segments + a smooth perlin-like wobble. */
+
+  // Cumulative elevation along worldX, in screen-pixels.
+  // 1 pct of trate = 80 worldX units. We sum gradient * length per segment.
+  // Visual amplification factor so 1% gradient → ~5px rise per 80 units.
+  const ELEV_AMP = 6;
+  const BASELINE_FRAC = 0.72; // baseline ground line (no elevation)
+
+  function elevationAt(wx) {
+    if (!state.monument) return 0;
+    const pct = wx / 80;
+    let e = 0;
+    for (const seg of state.monument.segments) {
+      if (pct <= seg.from_pct) break;
+      const segPct = Math.min(pct, seg.to_pct) - seg.from_pct;
+      // gradient = % grade. Each 1 pct of segment * gradient → small rise.
+      e += segPct * seg.gradient * ELEV_AMP;
+      if (pct < seg.to_pct) break;
+    }
+    /* small organic wobble so it doesn't feel like piecewise-linear */
+    const wob = Math.sin(wx * 0.012) * 4 + Math.cos(wx * 0.04) * 2;
+    return e + wob;
+  }
+
+  function terrainY(wx) {
+    return viewH * BASELINE_FRAC - elevationAt(wx);
+  }
+
+  function terrainSlope(wx) {
+    /* radians of terrain at worldX, used to tilt cyclist sprite */
+    const dx = 18;
+    const a = terrainY(wx - dx);
+    const b = terrainY(wx + dx);
+    return Math.atan2(b - a, dx * 2);
+  }
+
+  /* ---- World props (trees, houses, towers, vines) ----
+     Each has worldX. Y is computed as terrainY(worldX) at draw time. */
+  const props = [];   // {kind, worldX, ...}
+  const peloton = []; // {relativeAhead, color}
   let nextSpawnAt = 0;
-  let nextSignKm = 5;
+  let nextSignWx = 600;
 
   function rand(a, b) { return a + Math.random() * (b - a); }
   function pick(arr) { return arr[Math.floor(Math.random() * arr.length)]; }
 
   function spawnProp(worldX) {
-    const kind = pick(['vine', 'vine', 'vine', 'tree', 'tree', 'house', 'tower']);
-    const lane = Math.random() < 0.5 ? -1 : 1; // left or right side of road
+    const kind = pick(['vine','vine','vine','vine','tree','tree','tree','house','house','tower']);
     const detail = {
       kind,
       worldX,
-      lane,
       hue: rand(0, 1),
       size: rand(0.85, 1.15),
       colorVariant: Math.floor(rand(0, 3))
     };
-    if (kind === 'vine') {
-      detail.rows = Math.floor(rand(3, 7));
-      detail.length = rand(80, 180);
-    }
+    if (kind === 'vine') detail.bunches = Math.floor(rand(3, 6));
     props.push(detail);
   }
 
-  function spawnSign(worldX, label) {
-    props.push({ kind: 'sign', worldX, lane: 1, label });
-  }
-
   function initialSpawn() {
-    /* Pre-fill the world ahead of camera. */
-    for (let x = 0; x < 4000; x += rand(70, 160)) {
-      spawnProp(x);
-    }
+    for (let x = 200; x < 4500; x += rand(60, 130)) spawnProp(x);
   }
 
   function initPeloton() {
-    const colors = ['#1f78d1', '#ffd43b', '#7e3af2', '#fb7185', '#10b981'];
+    const colors = ['#1f78d1','#ffd43b','#7e3af2','#fb7185','#10b981'];
     for (let i = 0; i < 4; i++) {
       peloton.push({
-        worldX: rand(180, 800),
-        lane: rand(-0.6, 0.6),
+        relativeAhead: 220 + i * 70 + rand(-20, 20),
         color: colors[i % colors.length],
-        baseOffset: rand(-0.15, 0.25)
+        bobPhase: rand(0, Math.PI * 2)
       });
     }
   }
 
-  /* ---- Coord helpers ----
-     Road horizon at viewH * 0.62. Cyclist plane at viewH * 0.82.
-     Lane offset shifts the prop horizontally on the perspective road. */
-  const HORIZON = () => viewH * 0.62;
-  const ROAD_Y  = () => viewH * 0.86;
-
-  /* Map a world-X relative to camera to screen-X with parallax.
-     parallax 1.0 = ground plane, <1 = farther layers. */
-  function toScreenX(worldX, parallax = 1) {
-    return viewW * 0.5 + (worldX - state.distance) * parallax;
-  }
-
-  /* ---- Render layers ---- */
+  /* ---- Render: SKY ---- */
   function drawSky() {
+    /* segment-tinted gradient */
     const seg = state.activeSegment;
-    /* Slight sky tint variation by segment kind for visual variety */
-    let topCol = '#1a2238', midCol = '#5b4a63', botCol = '#cfa97a';
+    let topCol = '#1c2c4a', midCol = '#cb7d62', botCol = '#f3c79b';
     if (seg) {
-      if (seg.kind === 'climb')  { topCol = '#2a1f3b'; midCol = '#6a4a55'; }
-      if (seg.kind === 'descent'){ topCol = '#1a2840'; midCol = '#536f7a'; botCol = '#dabe97'; }
-      if (seg.kind === 'flat')   { topCol = '#1f2a44'; midCol = '#6a5a72'; }
+      if (seg.kind === 'climb')   { topCol = '#2a1f3b'; midCol = '#a85a4f'; botCol = '#e7b58a'; }
+      if (seg.kind === 'descent') { topCol = '#1a2840'; midCol = '#7e7c8c'; botCol = '#dabe97'; }
+      if (seg.kind === 'flat')    { topCol = '#1c2c4a'; midCol = '#c9836a'; botCol = '#f4cda3'; }
     }
     const g = ctx.createLinearGradient(0, 0, 0, viewH);
     g.addColorStop(0, topCol);
     g.addColorStop(0.55, midCol);
-    g.addColorStop(1, botCol);
+    g.addColorStop(0.95, botCol);
     ctx.fillStyle = g;
     ctx.fillRect(0, 0, viewW, viewH);
 
-    /* Drifting clouds */
+    /* Sun disc — lower right */
+    const sunY = viewH * 0.28;
+    const sunX = viewW * 0.78;
+    const sunR = Math.min(viewW, viewH) * 0.07;
+    const sg = ctx.createRadialGradient(sunX, sunY, sunR * 0.4, sunX, sunY, sunR * 1.6);
+    sg.addColorStop(0, 'rgba(255, 220, 170, 0.95)');
+    sg.addColorStop(0.5, 'rgba(255, 180, 130, 0.5)');
+    sg.addColorStop(1, 'rgba(255, 180, 130, 0)');
+    ctx.fillStyle = sg;
+    ctx.fillRect(sunX - sunR * 1.6, sunY - sunR * 1.6, sunR * 3.2, sunR * 3.2);
+    ctx.fillStyle = 'rgba(255, 230, 190, 0.95)';
+    ctx.beginPath();
+    ctx.arc(sunX, sunY, sunR * 0.55, 0, Math.PI * 2);
+    ctx.fill();
+
+    /* Drifting clouds (slow parallax) */
     ctx.fillStyle = 'rgba(255,255,255,0.18)';
-    const cloudOffset = state.distance * 0.05;
+    const cloudOff = state.distance * 0.04;
     for (let i = 0; i < 5; i++) {
-      const cx = ((i * 280 - cloudOffset) % (viewW + 400)) - 100;
-      const cy = viewH * 0.18 + Math.sin(i * 1.7) * 30;
-      drawCloud(cx, cy, 60 + (i % 3) * 20);
+      const cx = ((i * 280 - cloudOff) % (viewW + 400) + viewW + 400) % (viewW + 400) - 100;
+      const cy = viewH * 0.14 + Math.sin(i * 1.7) * 22;
+      drawCloud(cx, cy, 60 + (i % 3) * 22);
     }
   }
 
@@ -148,409 +183,416 @@
     ctx.fill();
   }
 
-  function drawHillsFar() {
+  /* ---- Render: HILLS (background silhouettes) ---- */
+  function drawFarHills() {
     ctx.fillStyle = 'rgba(69, 5, 33, 0.55)';
-    const baseY = HORIZON() - 6;
-    const offset = state.distance * 0.15;
+    const baseY = viewH * 0.55;
+    const off = state.distance * 0.12;
     ctx.beginPath();
-    ctx.moveTo(0, baseY + 80);
-    for (let x = -100; x <= viewW + 100; x += 30) {
-      const py = baseY
-                 + Math.sin((x + offset) * 0.012) * 28
-                 + Math.cos((x + offset) * 0.03) * 10;
-      ctx.lineTo(x, py);
+    ctx.moveTo(0, viewH);
+    for (let x = -50; x <= viewW + 50; x += 26) {
+      const y = baseY
+        + Math.sin((x + off) * 0.011) * 32
+        + Math.cos((x + off) * 0.034) * 14;
+      ctx.lineTo(x, y);
     }
-    ctx.lineTo(viewW + 100, baseY + 80);
-    ctx.lineTo(0, baseY + 80);
+    ctx.lineTo(viewW + 50, viewH);
     ctx.closePath();
     ctx.fill();
   }
 
-  function drawHillsMid() {
-    ctx.fillStyle = 'rgba(44, 3, 20, 0.85)';
-    const baseY = HORIZON() + 24;
-    const offset = state.distance * 0.4;
+  function drawMidHills() {
+    ctx.fillStyle = 'rgba(44, 3, 20, 0.78)';
+    const baseY = viewH * 0.66;
+    const off = state.distance * 0.32;
     ctx.beginPath();
-    ctx.moveTo(0, baseY + 200);
-    for (let x = -80; x <= viewW + 80; x += 24) {
-      const py = baseY
-                 + Math.sin((x + offset) * 0.018) * 34
-                 + Math.cos((x + offset) * 0.045) * 9;
-      ctx.lineTo(x, py);
+    ctx.moveTo(0, viewH);
+    for (let x = -30; x <= viewW + 30; x += 22) {
+      const y = baseY
+        + Math.sin((x + off) * 0.018) * 36
+        + Math.cos((x + off) * 0.05) * 10;
+      ctx.lineTo(x, y);
     }
-    ctx.lineTo(viewW + 80, baseY + 200);
-    ctx.lineTo(0, baseY + 200);
+    ctx.lineTo(viewW + 30, viewH);
     ctx.closePath();
     ctx.fill();
   }
 
-  function drawRoad() {
-    /* Trapezoid road with horizon-vanishing perspective. */
-    const horizon = HORIZON();
-    const roadY = ROAD_Y();
-    const roadBottom = viewH;
-    const farW = viewW * 0.06;
-    const nearW = viewW * 0.95;
-    const cx = viewW * 0.5;
-
-    /* Verge (grass) */
-    ctx.fillStyle = '#3b5d2c';
-    ctx.fillRect(0, horizon, viewW, viewH - horizon);
-
-    /* Vineyard band — alternating dark/light green stripes that move */
-    const vineOffset = state.distance * 0.7;
-    for (let row = 0; row < 14; row++) {
-      const y0 = horizon + 2 + row * ((viewH - horizon) / 22);
-      const y1 = y0 + ((viewH - horizon) / 22);
-      if (y1 > roadY - 12) break;
-      const stripeOff = (vineOffset * (1 + row * 0.05)) % 80;
-      for (let sx = -stripeOff; sx < viewW; sx += 80) {
-        const isDark = ((Math.floor((sx + vineOffset) / 80)) % 2) === 0;
-        ctx.fillStyle = isDark ? 'rgba(28, 60, 28, 0.85)' : 'rgba(72, 110, 56, 0.7)';
-        ctx.fillRect(sx, y0, 40, y1 - y0);
-      }
+  /* ---- Render: TERRAIN (the playable ground) ---- */
+  function drawTerrain() {
+    const samples = 80;
+    const path = [];
+    for (let i = 0; i <= samples; i++) {
+      const sx = (i / samples) * viewW;
+      const wx = state.distance + (sx - cyclistScreenX());
+      path.push({ sx, sy: terrainY(wx), wx });
     }
 
-    /* Dirt shoulder */
-    ctx.fillStyle = '#8a6c4a';
+    /* Grass polygon */
+    ctx.fillStyle = '#3a5d2a';
     ctx.beginPath();
-    ctx.moveTo(cx - farW * 1.4, horizon);
-    ctx.lineTo(cx + farW * 1.4, horizon);
-    ctx.lineTo(cx + nearW * 0.6, roadBottom);
-    ctx.lineTo(cx - nearW * 0.6, roadBottom);
+    ctx.moveTo(0, viewH);
+    for (const p of path) ctx.lineTo(p.sx, p.sy);
+    ctx.lineTo(viewW, viewH);
     ctx.closePath();
     ctx.fill();
 
-    /* Asphalt */
-    ctx.fillStyle = '#2d2a26';
+    /* Darker grass band just below surface for depth */
+    ctx.fillStyle = 'rgba(0, 0, 0, 0.18)';
     ctx.beginPath();
-    ctx.moveTo(cx - farW, horizon);
-    ctx.lineTo(cx + farW, horizon);
-    ctx.lineTo(cx + nearW * 0.5, roadBottom);
-    ctx.lineTo(cx - nearW * 0.5, roadBottom);
+    ctx.moveTo(0, viewH);
+    for (const p of path) ctx.lineTo(p.sx, p.sy + 24);
+    ctx.lineTo(viewW, viewH);
     ctx.closePath();
     ctx.fill();
 
-    /* Center dashed line, scrolling toward camera (perspective) */
-    ctx.fillStyle = 'rgba(228, 203, 157, 0.9)';
-    const dashCount = 14;
-    const offset = (state.distance * 1.6) % 1;
-    for (let i = 0; i < dashCount; i++) {
-      const t = ((i / dashCount) + offset) % 1;
-      const tt = Math.pow(t, 1.8); // perspective curve
-      const y = horizon + (roadBottom - horizon) * tt;
-      const halfW = farW + (nearW * 0.5 - farW) * tt;
-      const dashH = 4 + 14 * tt;
-      ctx.fillRect(cx - 1, y, 2, Math.max(2, dashH * 0.4));
-    }
-
-    /* Side line markers (white) */
-    ctx.strokeStyle = 'rgba(255,255,255,0.6)';
-    ctx.lineWidth = 1;
+    /* Asphalt strip following the surface */
+    ctx.strokeStyle = '#1f1c18';
+    ctx.lineWidth = 14;
+    ctx.lineJoin = 'round';
     ctx.beginPath();
-    ctx.moveTo(cx - farW * 0.96, horizon);
-    ctx.lineTo(cx - nearW * 0.49, roadBottom);
-    ctx.moveTo(cx + farW * 0.96, horizon);
-    ctx.lineTo(cx + nearW * 0.49, roadBottom);
+    ctx.moveTo(path[0].sx, path[0].sy + 4);
+    for (const p of path) ctx.lineTo(p.sx, p.sy + 4);
     ctx.stroke();
-  }
 
-  /* Project a world prop to screen using perspective.
-     Returns null if behind camera or too far ahead. */
-  function projectProp(prop, parallax = 0.95) {
-    const horizon = HORIZON();
-    const roadBottom = viewH;
-    /* "depth" along the road, 0 = horizon (far), 1 = camera (close) */
-    const dx = (prop.worldX - state.distance) * parallax;
-    if (dx < -120) return null;       // already behind camera
-    if (dx > 1800) return null;       // too far ahead
-    /* Map dx to depth t in [0..1+]. Closer dx = larger t. */
-    const t = Math.max(0.001, 1 - dx / 1800);
-    const tt = Math.pow(t, 1.8);
-    const y = horizon + (roadBottom - horizon) * tt;
-    const lateral = prop.lane * (60 + 380 * tt);
-    const x = viewW * 0.5 + lateral;
-    const scale = 0.05 + 0.95 * tt;
-    return { x, y, scale, t: tt };
-  }
-
-  /* ---- Prop renderers ---- */
-  function drawTree(p, proj) {
-    const h = 60 * proj.scale * (p.size || 1);
-    /* trunk */
-    ctx.fillStyle = '#3a261a';
-    ctx.fillRect(proj.x - 2 * proj.scale, proj.y - h * 0.35, 4 * proj.scale, h * 0.35);
-    /* canopy */
-    ctx.fillStyle = ['#2f6b2c', '#3a7d36', '#4a8c3e'][p.colorVariant % 3];
+    /* Yellow dashed center stripe */
+    ctx.strokeStyle = 'rgba(228, 203, 157, 0.85)';
+    ctx.lineWidth = 1.5;
+    const dashLen = 14, gapLen = 16;
+    ctx.setLineDash([dashLen, gapLen]);
+    ctx.lineDashOffset = -((state.distance) % (dashLen + gapLen));
     ctx.beginPath();
-    ctx.ellipse(proj.x, proj.y - h * 0.55, h * 0.35, h * 0.45, 0, 0, Math.PI * 2);
+    ctx.moveTo(path[0].sx, path[0].sy + 4);
+    for (const p of path) ctx.lineTo(p.sx, p.sy + 4);
+    ctx.stroke();
+    ctx.setLineDash([]);
+
+    /* Vineyard texture — short vertical green tufts on the grass below road */
+    ctx.fillStyle = 'rgba(20, 50, 18, 0.55)';
+    const tuftStep = 26;
+    const tuftOffset = Math.floor(state.distance / tuftStep) * tuftStep;
+    for (let wx = state.distance - 200; wx < state.distance + viewW + 200; wx += tuftStep) {
+      const sx = worldToScreenX(wx);
+      if (sx < -10 || sx > viewW + 10) continue;
+      const sy = terrainY(wx) + 16;
+      ctx.fillRect(sx - 1, sy + 4, 2, 8);
+      ctx.fillRect(sx + 6, sy + 8, 2, 6);
+    }
+  }
+
+  /* ---- Render: PROPS on terrain ---- */
+  function drawTree(p) {
+    const sx = worldToScreenX(p.worldX);
+    if (sx < -50 || sx > viewW + 50) return;
+    const sy = terrainY(p.worldX);
+    const h = 60 * p.size;
+    /* trunk */
+    ctx.fillStyle = '#2e1f14';
+    ctx.fillRect(sx - 2, sy - h * 0.45, 4, h * 0.45);
+    /* canopy */
+    ctx.fillStyle = ['#234d20', '#2d6128', '#1b4519'][p.colorVariant % 3];
+    ctx.beginPath();
+    ctx.ellipse(sx, sy - h * 0.65, h * 0.36, h * 0.46, 0, 0, Math.PI * 2);
     ctx.fill();
   }
 
-  function drawHouse(p, proj) {
-    const w = 70 * proj.scale * (p.size || 1);
-    const h = 50 * proj.scale * (p.size || 1);
-    const x = proj.x - w / 2;
-    const y = proj.y - h;
+  function drawHouse(p) {
+    const sx = worldToScreenX(p.worldX);
+    if (sx < -80 || sx > viewW + 80) return;
+    const sy = terrainY(p.worldX);
+    const w = 64 * p.size;
+    const h = 42 * p.size;
+    const x = sx - w / 2;
+    const y = sy - h;
     /* walls */
-    ctx.fillStyle = '#f4eddd';
+    ctx.fillStyle = '#f3eadb';
     ctx.fillRect(x, y, w, h);
-    /* roof — terracotta */
+    /* roof */
     ctx.fillStyle = ['#a3431f', '#b85530', '#8d3a1e'][p.colorVariant % 3];
     ctx.beginPath();
     ctx.moveTo(x - w * 0.08, y);
-    ctx.lineTo(x + w * 0.5, y - h * 0.45);
+    ctx.lineTo(x + w * 0.5, y - h * 0.5);
     ctx.lineTo(x + w * 1.08, y);
     ctx.closePath();
     ctx.fill();
-    /* window */
-    ctx.fillStyle = '#3b2814';
-    ctx.fillRect(x + w * 0.35, y + h * 0.35, w * 0.3, h * 0.35);
-    /* door */
-    ctx.fillStyle = '#23170c';
-    ctx.fillRect(x + w * 0.1, y + h * 0.5, w * 0.18, h * 0.5);
+    /* door + window */
+    ctx.fillStyle = '#2b1c10';
+    ctx.fillRect(x + w * 0.12, y + h * 0.45, w * 0.18, h * 0.55);
+    ctx.fillStyle = '#36281a';
+    ctx.fillRect(x + w * 0.5, y + h * 0.32, w * 0.28, h * 0.32);
+    /* window panes */
+    ctx.strokeStyle = '#f3eadb';
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.moveTo(x + w * 0.64, y + h * 0.32);
+    ctx.lineTo(x + w * 0.64, y + h * 0.64);
+    ctx.stroke();
   }
 
-  function drawTower(p, proj) {
-    const w = 30 * proj.scale * (p.size || 1);
-    const h = 110 * proj.scale * (p.size || 1);
-    const x = proj.x - w / 2;
-    const y = proj.y - h;
+  function drawTower(p) {
+    const sx = worldToScreenX(p.worldX);
+    if (sx < -60 || sx > viewW + 60) return;
+    const sy = terrainY(p.worldX);
+    const w = 22 * p.size;
+    const h = 92 * p.size;
+    const x = sx - w / 2;
+    const y = sy - h;
     /* base */
-    ctx.fillStyle = '#e4d6b4';
-    ctx.fillRect(x, y + h * 0.35, w, h * 0.65);
+    ctx.fillStyle = '#dccdb0';
+    ctx.fillRect(x, y + h * 0.32, w, h * 0.68);
     /* spire */
     ctx.fillStyle = '#5e2a14';
     ctx.beginPath();
-    ctx.moveTo(x - w * 0.1, y + h * 0.35);
+    ctx.moveTo(x - w * 0.15, y + h * 0.32);
     ctx.lineTo(x + w * 0.5, y);
-    ctx.lineTo(x + w * 1.1, y + h * 0.35);
+    ctx.lineTo(x + w * 1.15, y + h * 0.32);
     ctx.closePath();
     ctx.fill();
-    /* clock dot */
-    ctx.fillStyle = '#3b2814';
-    ctx.beginPath();
-    ctx.arc(x + w * 0.5, y + h * 0.55, w * 0.18, 0, Math.PI * 2);
-    ctx.fill();
+    /* tiny window */
+    ctx.fillStyle = '#2b1c10';
+    ctx.fillRect(x + w * 0.4, y + h * 0.5, w * 0.2, h * 0.16);
   }
 
-  function drawVine(p, proj) {
-    /* Compact vineyard cluster — rows of small green dots */
-    const w = (p.length || 100) * proj.scale * 0.4;
-    const rows = p.rows || 4;
-    ctx.fillStyle = 'rgba(28, 60, 28, 0.8)';
-    for (let r = 0; r < rows; r++) {
-      const ry = proj.y - r * 6 * proj.scale;
-      for (let i = 0; i < 6; i++) {
-        const dx = (i / 6) * w - w / 2 + r * 2;
-        ctx.beginPath();
-        ctx.arc(proj.x + dx, ry, 2.5 * proj.scale, 0, Math.PI * 2);
-        ctx.fill();
+  function drawVine(p) {
+    const sx = worldToScreenX(p.worldX);
+    if (sx < -40 || sx > viewW + 40) return;
+    const sy = terrainY(p.worldX);
+    /* a small bush + grape clusters */
+    const bunches = p.bunches || 4;
+    ctx.fillStyle = '#1d4419';
+    ctx.beginPath();
+    ctx.ellipse(sx, sy - 10, 14 * p.size, 8 * p.size, 0, 0, Math.PI * 2);
+    ctx.fill();
+    /* vertical poles + horizontal wire */
+    ctx.strokeStyle = '#3a2a1a';
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.moveTo(sx - 10 * p.size, sy);
+    ctx.lineTo(sx - 10 * p.size, sy - 16);
+    ctx.moveTo(sx + 10 * p.size, sy);
+    ctx.lineTo(sx + 10 * p.size, sy - 16);
+    ctx.moveTo(sx - 10 * p.size, sy - 14);
+    ctx.lineTo(sx + 10 * p.size, sy - 14);
+    ctx.stroke();
+    /* grape dots */
+    ctx.fillStyle = '#6b3aa6';
+    for (let i = 0; i < bunches; i++) {
+      const bx = sx - 8 * p.size + (i / bunches) * 16 * p.size;
+      ctx.beginPath();
+      ctx.arc(bx, sy - 8, 1.6, 0, Math.PI * 2);
+      ctx.fill();
+    }
+  }
+
+  function drawSign(p) {
+    const sx = worldToScreenX(p.worldX);
+    if (sx < -40 || sx > viewW + 40) return;
+    const sy = terrainY(p.worldX);
+    const w = 36;
+    const h = 22;
+    /* pole */
+    ctx.fillStyle = '#888';
+    ctx.fillRect(sx - 1, sy - 28, 2, 28);
+    /* board */
+    ctx.fillStyle = '#fff';
+    ctx.strokeStyle = '#c00';
+    ctx.lineWidth = 2;
+    ctx.fillRect(sx - w / 2, sy - 28 - h, w, h);
+    ctx.strokeRect(sx - w / 2, sy - 28 - h, w, h);
+    ctx.fillStyle = '#222';
+    ctx.font = '600 11px Inter, sans-serif';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(p.label || '', sx, sy - 28 - h / 2);
+  }
+
+  function drawProps() {
+    /* draw far→near by worldX so close props occlude far ones */
+    const sorted = [...props].sort((a, b) => a.worldX - b.worldX);
+    for (const p of sorted) {
+      switch (p.kind) {
+        case 'tree': drawTree(p); break;
+        case 'house': drawHouse(p); break;
+        case 'tower': drawTower(p); break;
+        case 'vine': drawVine(p); break;
+        case 'sign': drawSign(p); break;
       }
     }
   }
 
-  function drawSign(p, proj) {
-    const w = 40 * proj.scale;
-    const h = 26 * proj.scale;
-    const px = proj.x - w / 2;
-    const py = proj.y - 32 * proj.scale - h;
-    /* pole */
-    ctx.fillStyle = '#888';
-    ctx.fillRect(proj.x - 1.5 * proj.scale, proj.y - 32 * proj.scale, 3 * proj.scale, 32 * proj.scale);
-    /* board */
-    ctx.fillStyle = '#fff';
-    ctx.strokeStyle = '#c00';
-    ctx.lineWidth = 2 * proj.scale;
-    ctx.fillRect(px, py, w, h);
-    ctx.strokeRect(px, py, w, h);
-    /* text */
-    if (proj.scale > 0.45) {
-      ctx.fillStyle = '#222';
-      ctx.font = `${Math.max(8, 11 * proj.scale)}px Inter, sans-serif`;
-      ctx.textAlign = 'center';
-      ctx.textBaseline = 'middle';
-      ctx.fillText(p.label || '', px + w / 2, py + h / 2);
-    }
-  }
-
-  /* ---- Cyclist sprite (for player AND peloton) ---- */
-  function drawCyclistAt(cx, cy, opts = {}) {
+  /* ---- Cyclist sprite (side profile, leans with terrain) ---- */
+  function drawCyclistAt(sx, sy, opts = {}) {
     const scale = opts.scale || 1;
+    const slope = opts.slope || 0;
     const phase = opts.phase || 0;
     const colorJersey = opts.color || '#e53747';
     const colorAccent = opts.accent || '#fff';
     const isPlayer = opts.isPlayer || false;
 
+    ctx.save();
+    /* anchor at saddle/pedal axis on ground */
+    ctx.translate(sx, sy);
+    ctx.rotate(slope);
+    ctx.scale(scale, scale);
+
     /* shadow */
     ctx.fillStyle = 'rgba(0,0,0,0.32)';
     ctx.beginPath();
-    ctx.ellipse(cx, cy + 28 * scale, 30 * scale, 5 * scale, 0, 0, Math.PI * 2);
+    ctx.ellipse(0, 4, 30, 4, 0, 0, Math.PI * 2);
     ctx.fill();
-
-    /* leg pedal animation */
-    const legSwing = Math.sin(phase) * 6 * scale;
-    const legSwing2 = Math.sin(phase + Math.PI) * 6 * scale;
 
     /* wheels */
     ctx.strokeStyle = '#1a1a1a';
-    ctx.lineWidth = Math.max(1.5, 3 * scale);
-    ctx.beginPath(); ctx.arc(cx - 22 * scale, cy + 18 * scale, 14 * scale, 0, Math.PI * 2); ctx.stroke();
-    ctx.beginPath(); ctx.arc(cx + 22 * scale, cy + 18 * scale, 14 * scale, 0, Math.PI * 2); ctx.stroke();
+    ctx.lineWidth = 2.6;
+    ctx.beginPath(); ctx.arc(-22, -10, 11, 0, Math.PI * 2); ctx.stroke();
+    ctx.beginPath(); ctx.arc(22, -10, 11, 0, Math.PI * 2); ctx.stroke();
 
-    /* spokes (suggest motion when moving) */
+    /* hub dots */
+    ctx.fillStyle = '#1a1a1a';
+    ctx.beginPath(); ctx.arc(-22, -10, 1.5, 0, Math.PI * 2); ctx.fill();
+    ctx.beginPath(); ctx.arc(22, -10, 1.5, 0, Math.PI * 2); ctx.fill();
+
+    /* spinning spoke hint */
     if (opts.spinning) {
       ctx.strokeStyle = 'rgba(255,255,255,0.35)';
       ctx.lineWidth = 1;
-      const spinPhase = phase * 1.3;
+      const sp = phase * 1.4;
       [-22, 22].forEach(wx => {
         ctx.beginPath();
-        ctx.moveTo(cx + wx * scale - 12 * scale * Math.cos(spinPhase), cy + 18 * scale - 12 * scale * Math.sin(spinPhase));
-        ctx.lineTo(cx + wx * scale + 12 * scale * Math.cos(spinPhase), cy + 18 * scale + 12 * scale * Math.sin(spinPhase));
+        ctx.moveTo(wx - 9 * Math.cos(sp), -10 - 9 * Math.sin(sp));
+        ctx.lineTo(wx + 9 * Math.cos(sp), -10 + 9 * Math.sin(sp));
         ctx.stroke();
       });
     }
 
-    /* frame */
+    /* frame triangle */
     ctx.strokeStyle = isPlayer ? '#e4cb9d' : '#cccccc';
-    ctx.lineWidth = Math.max(1.5, 3 * scale);
+    ctx.lineWidth = 2.4;
     ctx.beginPath();
-    ctx.moveTo(cx - 22 * scale, cy + 18 * scale);
-    ctx.lineTo(cx + 4 * scale,  cy);
-    ctx.lineTo(cx + 22 * scale, cy + 18 * scale);
-    ctx.moveTo(cx + 4 * scale, cy);
-    ctx.lineTo(cx - 4 * scale, cy - 18 * scale);
+    ctx.moveTo(-22, -10);     // rear hub
+    ctx.lineTo(0, -22);       // bottom of seat tube (~bottom bracket)
+    ctx.lineTo(22, -10);      // front hub
+    ctx.moveTo(0, -22);
+    ctx.lineTo(-2, -36);      // seat post
+    ctx.moveTo(0, -22);
+    ctx.lineTo(14, -32);      // top tube to head tube
+    ctx.lineTo(22, -10);
     ctx.stroke();
 
-    /* legs */
+    /* handlebars */
+    ctx.beginPath();
+    ctx.moveTo(14, -32);
+    ctx.lineTo(20, -36);
+    ctx.stroke();
+
+    /* legs (pedaling) — anchored at bottom bracket (0, -22) */
+    const legLen = 14;
+    const knee1 = { x: Math.cos(phase) * 6, y: -22 + Math.sin(phase) * 4 };
+    const knee2 = { x: Math.cos(phase + Math.PI) * 6, y: -22 + Math.sin(phase + Math.PI) * 4 };
     ctx.strokeStyle = '#1a1a1a';
-    ctx.lineWidth = Math.max(1.5, 2.6 * scale);
+    ctx.lineWidth = 2.4;
     ctx.beginPath();
-    ctx.moveTo(cx + 4 * scale, cy);
-    ctx.lineTo(cx + legSwing, cy + 14 * scale);
-    ctx.moveTo(cx + 4 * scale, cy);
-    ctx.lineTo(cx + legSwing2, cy + 14 * scale);
+    ctx.moveTo(-2, -36); ctx.lineTo(knee1.x, knee1.y); ctx.lineTo(knee1.x + 4, -22 + 8);
+    ctx.moveTo(-2, -36); ctx.lineTo(knee2.x, knee2.y); ctx.lineTo(knee2.x + 4, -22 + 8);
     ctx.stroke();
 
-    /* torso (jersey) */
+    /* torso (jersey, leaning forward) */
     ctx.fillStyle = colorJersey;
-    ctx.fillRect(cx - 6 * scale, cy - 26 * scale, 14 * scale, 18 * scale);
-    /* jersey accent stripe */
-    ctx.fillStyle = colorAccent;
-    ctx.fillRect(cx - 6 * scale, cy - 16 * scale, 14 * scale, 2 * scale);
-
-    /* arms */
-    ctx.strokeStyle = colorJersey;
-    ctx.lineWidth = Math.max(1.5, 2.2 * scale);
     ctx.beginPath();
-    ctx.moveTo(cx + 0 * scale, cy - 20 * scale);
-    ctx.lineTo(cx + 14 * scale, cy - 4 * scale);
+    ctx.moveTo(-2, -36);
+    ctx.lineTo(2, -42);
+    ctx.lineTo(14, -36);
+    ctx.lineTo(8, -28);
+    ctx.closePath();
+    ctx.fill();
+    /* jersey accent */
+    ctx.fillStyle = colorAccent;
+    ctx.fillRect(-1, -34, 12, 1.5);
+
+    /* arms reaching to bars */
+    ctx.strokeStyle = colorJersey;
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.moveTo(8, -36); ctx.lineTo(20, -36);
     ctx.stroke();
 
-    /* helmet */
+    /* head + helmet */
     ctx.fillStyle = isPlayer ? '#e4cb9d' : '#444';
     ctx.beginPath();
-    ctx.ellipse(cx, cy - 30 * scale, 8 * scale, 6 * scale, 0, 0, Math.PI * 2);
+    ctx.ellipse(8, -44, 5, 4, 0, 0, Math.PI * 2);
     ctx.fill();
-    /* visor */
-    ctx.fillStyle = '#1a1a1a';
+    /* aero tail of helmet */
     ctx.beginPath();
-    ctx.arc(cx + 4 * scale, cy - 28 * scale, 3 * scale, 0, Math.PI * 2);
+    ctx.moveTo(8, -44); ctx.lineTo(0, -42); ctx.lineTo(4, -47); ctx.closePath();
     ctx.fill();
+    /* visor / face */
+    ctx.fillStyle = '#1a1a1a';
+    ctx.fillRect(11, -44, 3, 2);
+
+    ctx.restore();
   }
 
-  /* ---- Peloton render ---- */
-  function drawPeloton() {
-    /* Peloton sits "ahead" of the player in world-space. As player goes
-       faster, they get closer; slower, they pull away. */
-    peloton.forEach((c) => {
-      /* drift relative to player based on speed */
-      const driftRate = c.baseOffset - state.speed * 0.2;
-      c.worldX += driftRate;
-      const proj = projectProp({ worldX: c.worldX, lane: c.lane }, 1.0);
-      if (!proj) return;
-      drawCyclistAt(proj.x, proj.y, {
-        scale: 0.55 + proj.t * 0.4,
-        phase: state.pedalPhase + c.baseOffset * 4,
+  /* ---- Peloton (sticky, always ahead of player) ---- */
+  function drawPeloton(dt) {
+    peloton.forEach(c => {
+      /* drift: if player slow → peloton pulls away; player fast → catches up */
+      const target = state.speed * 1.05;
+      const drift = (1 - target) * 12 * dt;
+      c.relativeAhead = Math.max(60, Math.min(800, c.relativeAhead + drift));
+      c.bobPhase += dt * (4 + state.speed * 6);
+
+      const wx = state.distance + c.relativeAhead;
+      const sx = worldToScreenX(wx);
+      if (sx < -60 || sx > viewW + 60) return;
+      const sy = terrainY(wx);
+      const slope = terrainSlope(wx);
+      drawCyclistAt(sx, sy, {
+        scale: 0.85,
+        slope,
+        phase: c.bobPhase,
         color: c.color,
-        spinning: state.speed > 0.1
+        spinning: state.speed > 0.05
       });
     });
   }
 
-  /* ---- Player ---- */
   function drawPlayer() {
-    const cx = viewW * 0.5;
-    const cy = ROAD_Y();
-    const breath = Math.sin(state.elapsed * 2.4) * 1.2;
-    drawCyclistAt(cx, cy + breath, {
-      scale: 1.3,
+    const sx = cyclistScreenX();
+    const sy = terrainY(state.distance);
+    const slope = terrainSlope(state.distance);
+    /* breath wobble */
+    const breath = Math.sin(state.elapsed * 2.4) * 0.6;
+    drawCyclistAt(sx, sy + breath, {
+      scale: 1.0,
+      slope,
       phase: state.pedalPhase,
       color: '#e53747',
       accent: '#e4cb9d',
       isPlayer: true,
-      spinning: state.speed > 0.1
+      spinning: state.speed > 0.05
     });
-
-    /* exertion glow when in anaerobic */
+    /* anaerobic glow */
     if (state.cadence > 110) {
       ctx.fillStyle = 'rgba(229, 55, 71, 0.18)';
       ctx.beginPath();
-      ctx.arc(cx, cy - 12, 50, 0, Math.PI * 2);
+      ctx.arc(sx, sy - 30, 30, 0, Math.PI * 2);
       ctx.fill();
     }
   }
 
-  /* ---- Props render ---- */
-  function drawProps() {
-    /* Sort by depth (worldX descending = far first) */
-    const visible = [];
-    for (const p of props) {
-      const proj = projectProp(p, 0.95);
-      if (proj) visible.push({ p, proj });
-    }
-    visible.sort((a, b) => a.proj.t - b.proj.t);
-    for (const { p, proj } of visible) {
-      switch (p.kind) {
-        case 'tree':  drawTree(p, proj); break;
-        case 'house': drawHouse(p, proj); break;
-        case 'tower': drawTower(p, proj); break;
-        case 'vine':  drawVine(p, proj); break;
-        case 'sign':  drawSign(p, proj); break;
-      }
-    }
-  }
-
-  function drawStations() {
-    if (!state.stations.length || !window.rcPickups) return;
-    /* Render in depth order so closer stations occlude farther ones */
-    const visible = [];
-    for (const st of state.stations) {
-      const proj = projectProp({ worldX: st.worldX, lane: st.lane }, 1.0);
-      if (proj) visible.push({ st, t: proj.t });
-    }
-    visible.sort((a, b) => a.t - b.t);
-    for (const { st } of visible) {
-      window.rcPickups.renderStation(ctx, st, projectProp);
-    }
-  }
-
-  /* ---- Spawning + cleanup ---- */
+  /* ---- Maintain world (spawn + cleanup) ---- */
   function maintainWorld() {
-    /* Drop stuff far behind */
     for (let i = props.length - 1; i >= 0; i--) {
-      if (props[i].worldX < state.distance - 300) props.splice(i, 1);
+      if (props[i].worldX < state.distance - viewW * 0.5) props.splice(i, 1);
     }
-    /* Spawn ahead */
-    while (state.distance + 4000 > nextSpawnAt) {
+    while (state.distance + viewW * 1.5 > nextSpawnAt) {
       spawnProp(nextSpawnAt);
-      nextSpawnAt += rand(70, 160);
+      nextSpawnAt += rand(60, 130);
     }
-    /* Spawn km signs every "5 km" of virtual distance */
-    while (state.distance > nextSignKm * 80 - 800) {
-      const realKm = Math.round(nextSignKm * (state.monument?.real?.long_km || 125) / 100);
-      spawnSign(nextSignKm * 80, `${realKm} km`);
-      nextSignKm += 8;
+    while (state.distance > nextSignWx - viewW) {
+      const realKm = Math.round(nextSignWx / 80 * (state.monument?.real?.long_km || 125) / 100);
+      props.push({ kind: 'sign', worldX: nextSignWx, label: `${realKm} km` });
+      nextSignWx += 8 * 80; // every "8% of trate" ≈ every ~10 km
     }
   }
 
@@ -585,49 +627,32 @@
 
     if (!state.waiting && !state.paused) {
       state.elapsed += dt;
-
       const pressing = window.rcInput && window.rcInput.isPressing();
 
-      /* Boost multiplier expiry */
       if (state.boostUntil && state.elapsed > state.boostUntil) {
-        state.boostMul = 1;
-        state.boostUntil = 0;
+        state.boostMul = 1; state.boostUntil = 0;
       }
 
-      /* Speed: held → ramps up to 1.0; released → decays to 0.
-         Gradient applies a multiplier (climbs slow you, descents speed up). */
       const seg = state.activeSegment;
       const gradMul = seg ? Math.max(0.55, 1 - seg.gradient * 0.05) : 1;
       const targetSpeed = (pressing ? 1 : 0) * gradMul * state.boostMul;
       state.speed += (targetSpeed - state.speed) * Math.min(1, dt * 3);
 
-      /* Distance + progress */
       state.distance += state.speed * 200 * dt;
       state.progressPct = Math.min(100, state.progressPct + state.speed * (100 / 180) * dt);
 
-      /* Cadence approximation — placeholder for session 2 */
       const targetCadence = pressing ? 92 : 0;
       state.cadence += (targetCadence - state.cadence) * Math.min(1, dt * 4);
-
-      /* Pedal phase — speed-driven */
       state.pedalPhase += dt * (4 + state.speed * 8);
 
-      /* Energy drain — minimal placeholder so it doesn't sit at 100 */
       const drain = pressing ? 1.0 : 0.15;
       state.energy = Math.max(0, state.energy - drain * dt);
 
       maintainWorld();
       checkSegment();
 
-      /* Pickups + tactical decisions */
-      if (state.stations.length) {
-        window.rcPickups.collectIfPassed(state, state.stations);
-      }
-      if (window.rcTactics) {
-        window.rcTactics.tick(state, () => {
-          /* Optional: show a brief flash when choice applied */
-        });
-      }
+      if (state.stations.length) window.rcPickups.collectIfPassed(state, state.stations);
+      if (window.rcTactics) window.rcTactics.tick(state, () => {});
 
       window.rcUI.setTimer(state.elapsed);
       window.rcUI.setProgressPct(state.progressPct);
@@ -635,23 +660,34 @@
       window.rcUI.setEnergy(state.energy);
     }
 
-    /* Render order: sky → far → mid → road (with vineyards) → props → stations → peloton → player */
     drawSky();
-    drawHillsFar();
-    drawHillsMid();
-    drawRoad();
+    drawFarHills();
+    drawMidHills();
+    drawTerrain();
     drawProps();
     drawStations();
-    drawPeloton();
+    drawPeloton(state.waiting ? 0 : (1 / 60));
     drawPlayer();
 
     requestAnimationFrame(frame);
   }
 
+  function drawStations() {
+    if (!state.stations.length || !window.rcPickups) return;
+    /* Draw far → near by worldX (so closer stations occlude). */
+    const sorted = [...state.stations].sort((a, b) => a.worldX - b.worldX);
+    for (const st of sorted) {
+      const sx = worldToScreenX(st.worldX);
+      if (sx < -120 || sx > viewW + 120) continue;
+      const sy = terrainY(st.worldX);
+      window.rcPickups.renderStation(ctx, st, sx, sy);
+    }
+  }
+
   /* ---- Boot ---- */
   function attachStartHandler() {
     const overlay = document.getElementById('start-overlay');
-    const hint    = document.querySelector('.kbd-hint');
+    const hint = document.querySelector('.kbd-hint');
     function start() {
       if (!state.waiting) return;
       state.waiting = false;
@@ -659,12 +695,12 @@
       setTimeout(() => hint && hint.classList.add('fade'), 2400);
       window.rcTrack && window.rcTrack('game_start', { monument: monumentId });
     }
-    /* First key press OR first tap starts the game */
     window.addEventListener('keydown', (e) => {
       if (e.code === 'Space' || e.code === 'Enter') start();
-    }, { once: false });
-    document.getElementById('tap-zone').addEventListener('touchstart', start, { passive: true });
-    document.getElementById('tap-zone').addEventListener('mousedown', start);
+    });
+    const tap = document.getElementById('tap-zone');
+    tap.addEventListener('touchstart', start, { passive: true });
+    tap.addEventListener('mousedown', start);
     overlay && overlay.addEventListener('click', start);
   }
 
@@ -672,7 +708,7 @@
     resize();
     initialSpawn();
     initPeloton();
-    nextSpawnAt = 4000;
+    nextSpawnAt = 4500;
     requestAnimationFrame(frame);
     attachStartHandler();
 
@@ -682,12 +718,8 @@
       window.rcUI.setMonumentName(m.name);
       const pts = window.rcMonument.buildElevationPath(m);
       window.rcMonument.renderProfileSvg(window.rcUI.els.profileSvg, pts);
-
-      /* Build pickup feed stations + arm tactical decisions */
       if (window.rcPickups) state.stations = window.rcPickups.makeStations(m);
-      if (window.rcTactics) window.rcTactics.setup(m);
-
-      /* Title in start overlay */
+      if (window.rcTactics)  window.rcTactics.setup(m);
       const overlay = document.getElementById('start-overlay');
       if (overlay) {
         const h = overlay.querySelector('h2');

@@ -43,85 +43,95 @@
     }
   }
 
-  /* Render: tent + banner + small product crate on the roadside.
-     `projectProp` is the engine's perspective projector (passed in to keep
-     this module decoupled). */
-  function renderStation(ctx, station, project) {
-    const proj = project({ worldX: station.worldX, lane: station.lane }, 1.0);
-    if (!proj) return;
-    const s = proj.scale;
-    const x = proj.x;
-    const y = proj.y;
+  /* Render: side-profile Enervit feed station at world position (sx, sy)
+     where sy is the terrain surface. */
+  function renderStation(ctx, station, sx, sy) {
+    /* Tent dimensions */
+    const w = 64;
+    const h = 44;
+    const x = sx - w / 2;
+    const y = sy - h;
 
-    /* Tent base */
-    const w = 90 * s;
-    const h = 56 * s;
-    const tx = x - w / 2;
-    const ty = y - h - 6 * s;
+    /* Pole + flag — visible from far so player anticipates the station */
+    ctx.fillStyle = '#888';
+    ctx.fillRect(sx + w / 2 - 1, y - 26, 2, 26);
+    ctx.fillStyle = '#e30613';
+    ctx.beginPath();
+    ctx.moveTo(sx + w / 2, y - 26);
+    ctx.lineTo(sx + w / 2 + 16, y - 22);
+    ctx.lineTo(sx + w / 2, y - 18);
+    ctx.closePath();
+    ctx.fill();
 
     /* Tent canopy — Enervit red */
     ctx.fillStyle = '#e30613';
     ctx.beginPath();
-    ctx.moveTo(tx - 8 * s, ty + 16 * s);
-    ctx.lineTo(tx + w / 2,  ty - 6 * s);
-    ctx.lineTo(tx + w + 8 * s, ty + 16 * s);
+    ctx.moveTo(x - 6, y + 14);
+    ctx.lineTo(x + w / 2, y - 4);
+    ctx.lineTo(x + w + 6, y + 14);
     ctx.closePath();
     ctx.fill();
 
+    /* Canopy fringe lines for that classic tent look */
+    ctx.strokeStyle = 'rgba(255,255,255,0.4)';
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.moveTo(x - 6, y + 14); ctx.lineTo(x + w + 6, y + 14);
+    ctx.stroke();
+
     /* Tent body */
     ctx.fillStyle = '#fff';
-    ctx.fillRect(tx, ty + 16 * s, w, h - 16 * s);
+    ctx.fillRect(x, y + 14, w, h - 14);
 
-    /* Red stripe at top of body */
+    /* Red stripe with ENERVIT */
     ctx.fillStyle = '#e30613';
-    ctx.fillRect(tx, ty + 16 * s, w, 8 * s);
-
-    /* ENERVIT label (only readable when close enough) */
-    if (s > 0.55) {
-      ctx.fillStyle = '#fff';
-      ctx.font = `700 ${Math.round(11 * s)}px Inter, sans-serif`;
-      ctx.textAlign = 'center';
-      ctx.textBaseline = 'middle';
-      ctx.fillText('ENERVIT', tx + w / 2, ty + 20 * s);
-    }
+    ctx.fillRect(x, y + 14, w, 10);
+    ctx.fillStyle = '#fff';
+    ctx.font = '700 8px Inter, sans-serif';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText('ENERVIT', x + w / 2, y + 19);
 
     /* Table */
     ctx.fillStyle = '#3b2814';
-    ctx.fillRect(tx + 6 * s, ty + h - 4 * s, w - 12 * s, 6 * s);
+    ctx.fillRect(x + 4, y + h - 4, w - 8, 4);
 
     /* Product crates — colored by type */
     const palette = { gel: '#ff8c00', bar: '#2a8b3a', drink: '#1f78d1' };
-    const cw = 14 * s;
-    const ch = 18 * s;
     for (let i = 0; i < 3; i++) {
-      const cx = tx + 14 * s + i * (cw + 6 * s);
-      const cy = ty + h - 4 * s - ch;
+      const cx = x + 8 + i * 16;
+      const cy = y + h - 4 - 14;
       ctx.fillStyle = palette[station.type] || '#888';
-      ctx.fillRect(cx, cy, cw, ch);
-      ctx.fillStyle = 'rgba(255,255,255,0.6)';
-      ctx.fillRect(cx, cy + ch * 0.35, cw, 2 * s);
+      ctx.fillRect(cx, cy, 12, 14);
+      ctx.fillStyle = 'rgba(255,255,255,0.55)';
+      ctx.fillRect(cx, cy + 5, 12, 1.5);
     }
 
-    /* Type tag below station */
-    if (s > 0.5) {
-      const prod = PRODUCT[station.type];
-      ctx.fillStyle = 'rgba(0,0,0,0.55)';
-      const tagW = 60 * s;
-      const tagH = 16 * s;
-      ctx.fillRect(x - tagW / 2, y + 4 * s, tagW, tagH);
+    /* Product short tag below */
+    const prod = PRODUCT[station.type];
+    if (prod) {
+      ctx.fillStyle = 'rgba(0,0,0,0.7)';
+      ctx.fillRect(sx - 24, sy + 2, 48, 14);
       ctx.fillStyle = '#fff';
-      ctx.font = `600 ${Math.round(10 * s)}px Inter, sans-serif`;
+      ctx.font = '600 9px Inter, sans-serif';
       ctx.textAlign = 'center';
       ctx.textBaseline = 'middle';
-      ctx.fillText(prod ? prod.short : '', x, y + 4 * s + tagH / 2);
+      ctx.fillText(prod.short, sx, sy + 9);
     }
 
-    /* Glowing collected marker (consumed) */
+    /* Collected marker — green check */
     if (station.collected) {
-      ctx.fillStyle = 'rgba(25, 135, 84, 0.85)';
+      ctx.fillStyle = '#198754';
       ctx.beginPath();
-      ctx.arc(x, ty - 4 * s, 6 * s, 0, Math.PI * 2);
+      ctx.arc(sx + w / 2 - 4, y + 4, 5, 0, Math.PI * 2);
       ctx.fill();
+      ctx.strokeStyle = '#fff';
+      ctx.lineWidth = 1.5;
+      ctx.beginPath();
+      ctx.moveTo(sx + w / 2 - 6, y + 4);
+      ctx.lineTo(sx + w / 2 - 4.5, y + 6);
+      ctx.lineTo(sx + w / 2 - 1.5, y + 2);
+      ctx.stroke();
     }
   }
 
