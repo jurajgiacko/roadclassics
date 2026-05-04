@@ -16,14 +16,20 @@
   <div class="game-stage">
 
     <header class="hud-top">
-      <div class="timer" id="hud-timer">00:00.00</div>
+      <div class="timer-block">
+        <div class="timer" id="hud-timer">00:00.00</div>
+        <div class="timer-sub"><span id="hud-speed">0</span> km/h <span class="score-pop" id="hud-score">0</span></div>
+      </div>
       <div class="profile-mini" id="hud-profile" aria-label="Výškový profil tratu">
         <svg viewBox="0 0 100 30" preserveAspectRatio="none" id="profile-svg">
           <path d="M0,28 L0,28" stroke="rgba(228,203,157,0.5)" fill="rgba(228,203,157,0.18)" stroke-width="0.6" />
         </svg>
         <div class="pos-marker" id="pos-marker"></div>
       </div>
-      <div class="monument-name" id="hud-monument">Pálava</div>
+      <div class="name-block">
+        <div class="monument-name" id="hud-monument">Pálava</div>
+        <div class="name-sub"><span id="hud-distance">0.0</span> / <span id="hud-distance-total">125</span> km</div>
+      </div>
     </header>
 
     <canvas id="game-canvas"></canvas>
@@ -59,10 +65,53 @@
     <p class="sub" id="tactic-sub"></p>
     <div class="tactic-options" id="tactic-options"></div>
     <div class="tactic-countdown">
-      <span id="tactic-counter">3</span>
+      <span id="tactic-counter">7</span>
       <span class="ring"></span>
     </div>
   </div>
+
+  <div class="finish-modal" id="finish-modal" role="dialog" aria-modal="true" aria-label="Cieľ dosiahnutý">
+    <div class="stamp">Cieľ · Reistna kolonáda</div>
+    <h2 class="ribbon" id="finish-ribbon">Pálava dokončená</h2>
+    <div class="finish-score">
+      <span id="finish-score">0</span>
+      <small>Skóre</small>
+    </div>
+    <div class="finish-style" id="finish-style">
+      <span class="glyph" id="finish-style-glyph">★</span>
+      <span id="finish-style-label">Tempař</span>
+    </div>
+    <div class="finish-stats">
+      <div class="stat">
+        <div class="lab">Čas</div>
+        <div class="val" id="finish-time">00:00</div>
+        <div class="sub" id="finish-time-sub"></div>
+      </div>
+      <div class="stat">
+        <div class="lab">Energia</div>
+        <div class="val" id="finish-energy">0 / 100</div>
+        <div class="sub" id="finish-energy-sub">Záverečný stav</div>
+      </div>
+      <div class="stat">
+        <div class="lab">Enervit zbery</div>
+        <div class="val" id="finish-pickups">0 / 6</div>
+        <div class="sub">Občerstvovačky</div>
+      </div>
+      <div class="stat">
+        <div class="lab">Vzdialenosť</div>
+        <div class="val" id="finish-distance">125 km</div>
+        <div class="sub">Pálava long</div>
+      </div>
+    </div>
+    <div class="finish-pb" id="finish-pb"></div>
+    <div class="finish-actions">
+      <button type="button" class="btn btn-primary" id="finish-replay">Hraj znova</button>
+      <button type="button" class="btn btn-ghost" id="finish-share">Zdieľaj</button>
+      <a href="/" class="btn btn-secondary">Späť na monumenty</a>
+    </div>
+  </div>
+
+  <div class="confetti" id="confetti" aria-hidden="true"></div>
 
   <div class="start-overlay" id="start-overlay">
     <h2>Pálava</h2>
@@ -78,6 +127,7 @@
   <script src="/js/game/monument.js" defer></script>
   <script src="/js/game/pickups.js" defer></script>
   <script src="/js/game/tactics.js" defer></script>
+  <script src="/js/game/finish.js" defer></script>
   <script src="/js/game/engine.js" defer></script>
 </body>
 </html>

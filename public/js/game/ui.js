@@ -9,8 +9,15 @@
     zones:    document.getElementById('cadence-zones'),
     monument: document.getElementById('hud-monument'),
     posMarker:document.getElementById('pos-marker'),
-    profileSvg: document.getElementById('profile-svg')
+    profileSvg: document.getElementById('profile-svg'),
+    speed:    document.getElementById('hud-speed'),
+    distance: document.getElementById('hud-distance'),
+    distanceTotal: document.getElementById('hud-distance-total'),
+    score:    document.getElementById('hud-score')
   };
+
+  let lastScore = 0;
+  let scoreBumpTimeout = null;
 
   function fmtTime(s) {
     const m = Math.floor(s / 60);
@@ -51,6 +58,27 @@
     setTimer(seconds)     { if (els.timer)    els.timer.textContent = fmtTime(seconds); },
     setEnergy(value)      { if (els.energy)   els.energy.textContent = Math.round(value); setEnergyBar(value); },
     setCadence(rpm)       { if (els.cadence)  els.cadence.textContent = Math.round(rpm); setCadenceZones(rpm); },
-    setProgressPct(pct)   { if (els.posMarker) els.posMarker.style.left = `${Math.max(0, Math.min(100, pct))}%`; }
+    setProgressPct(pct)   { if (els.posMarker) els.posMarker.style.left = `${Math.max(0, Math.min(100, pct))}%`; },
+    setSpeed(kmh)         { if (els.speed) els.speed.textContent = Math.round(kmh); },
+    setDistance(km, total) {
+      if (els.distance) els.distance.textContent = km.toFixed(1);
+      if (els.distanceTotal && total != null) els.distanceTotal.textContent = total;
+    },
+    setScore(value) {
+      if (!els.score) return;
+      const v = Math.round(value);
+      if (v !== lastScore) {
+        const delta = v - lastScore;
+        els.score.textContent = v;
+        els.score.classList.remove('bump', 'minus');
+        if (delta > 0) els.score.classList.add('bump');
+        else if (delta < 0) els.score.classList.add('minus');
+        clearTimeout(scoreBumpTimeout);
+        scoreBumpTimeout = setTimeout(() => {
+          els.score.classList.remove('bump', 'minus');
+        }, 600);
+        lastScore = v;
+      }
+    }
   };
 })();

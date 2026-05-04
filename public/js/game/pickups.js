@@ -6,10 +6,12 @@
    - Pushes a floating toast ("+25 ENERVIT GEL") and applies energy/speed
      boost to game state */
 (function () {
+  /* Real Enervit C2:1PRO product line — the same range that's distributed
+     at Road Classics feed stations IRL. */
   const PRODUCT = {
-    gel:   { name: 'Liquid Gel',     short: 'GEL',   energy: 25, boost: { mul: 1.05, dur: 10 } },
-    bar:   { name: 'Power Sport Bar', short: 'BAR',   energy: 35, boost: null },
-    drink: { name: 'Sport Drink',    short: 'DRINK', energy: 25, boost: { mul: 1.10, dur: 5 } }
+    gel:   { name: 'Carbo Gel C2:1PRO',  short: 'C2:1 GEL',   energy: 25, boost: { mul: 1.05, dur: 10 }, score: 100 },
+    bar:   { name: 'Carbo Bar C2:1PRO',  short: 'C2:1 BAR',   energy: 35, boost: null,                     score: 80  },
+    drink: { name: 'Isocarb C2:1PRO',    short: 'ISOCARB',    energy: 30, boost: { mul: 1.10, dur: 8 },  score: 90  }
   };
 
   function makeStations(monument) {
@@ -41,6 +43,8 @@
       state.boostMul = prod.boost.mul;
       state.boostUntil = state.elapsed + prod.boost.dur;
     }
+    state.score = (state.score || 0) + (prod.score || 50);
+    state.pickupsCollected = (state.pickupsCollected || 0) + 1;
   }
 
   /* Render: side-profile Enervit feed station at world position (sx, sy)

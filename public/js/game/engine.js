@@ -49,6 +49,7 @@
     monument: null,
     waiting: true,
     paused: false,
+    finished: false,
     elapsed: 0,
     progressPct: 0,
     distance: 0,
@@ -60,7 +61,9 @@
     boostMul: 1,
     boostUntil: 0,
     stations: [],
-    styleLog: []
+    styleLog: [],
+    score: 0,
+    pickupsCollected: 0
   };
 
   /* ---- Terrain function ----
@@ -804,7 +807,7 @@
     const dt = Math.min(0.05, (now - lastT) / 1000);
     lastT = now;
 
-    if (!state.waiting && !state.paused) {
+    if (!state.waiting && !state.paused && !state.finished) {
       state.elapsed += dt;
       const pressing = window.rcInput && window.rcInput.isPressing();
 
@@ -833,10 +836,24 @@
       if (state.stations.length) window.rcPickups.collectIfPassed(state, state.stations);
       if (window.rcTactics) window.rcTactics.tick(state, () => {});
 
+      /* live derived stats for HUD */
+      const SPEED_KMH_SCALE = 38;   // speed=1 ≈ 38 km/h, speed=1.5 ≈ ~57 km/h
+      const totalKm = state.monument?.real?.long_km || 125;
+      const kmh = state.speed * SPEED_KMH_SCALE;
+      const km = state.progressPct * totalKm / 100;
+
       window.rcUI.setTimer(state.elapsed);
       window.rcUI.setProgressPct(state.progressPct);
       window.rcUI.setCadence(state.cadence);
       window.rcUI.setEnergy(state.energy);
+      window.rcUI.setSpeed(kmh);
+      window.rcUI.setDistance(km, totalKm);
+      window.rcUI.setScore(state.score);
+
+      /* Finish trigger */
+      if (state.progressPct >= 100 && !state.finished) {
+        if (window.rcFinish) window.rcFinish.open(state);
+      }
     }
 
     drawSky();
@@ -899,6 +916,10 @@
       window.rcMonument.renderProfileSvg(window.rcUI.els.profileSvg, pts);
       if (window.rcPickups) state.stations = window.rcPickups.makeStations(m);
       if (window.rcTactics)  window.rcTactics.setup(m);
+      if (window.rcFinish)   window.rcFinish.attach(state);
+
+      /* Initial HUD state — in case monument loaded after first frames */
+      window.rcUI.setDistance(0, m.real?.long_km || 125);
       const overlay = document.getElementById('start-overlay');
       if (overlay) {
         const h = overlay.querySelector('h2');

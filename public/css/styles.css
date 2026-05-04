@@ -659,16 +659,22 @@ body.game {
 }
 .tactic-countdown .ring {
   display: inline-block;
-  width: 28px;
-  height: 28px;
-  margin-left: 8px;
-  border: 3px solid rgba(228,203,157,.25);
-  border-top-color: var(--rc-energy);
+  width: 32px;
+  height: 32px;
+  margin-left: 10px;
   border-radius: 50%;
   vertical-align: middle;
-  animation: ring-spin 1s linear infinite;
+  background: conic-gradient(var(--rc-energy) 0deg, rgba(228,203,157,.18) 0);
+  position: relative;
+  transition: background 0.06s linear;
 }
-@keyframes ring-spin { to { transform: rotate(360deg); } }
+.tactic-countdown .ring::after {
+  content: "";
+  position: absolute;
+  inset: 5px;
+  background: rgba(20, 14, 22, 0.95);
+  border-radius: 50%;
+}
 
 /* ==========================================================================
    Tactic incoming hint (small ribbon above HUD)
@@ -692,6 +698,207 @@ body.game {
   box-shadow: 0 6px 18px rgba(229,55,71,.4);
 }
 .tactic-incoming.show { opacity: 1; transform: translate(-50%, 0); }
+.tactic-incoming.good { background: rgba(25, 135, 84, 0.95); box-shadow: 0 6px 18px rgba(25,135,84,.4); }
+.tactic-incoming.bad  { background: rgba(220, 53, 69, 0.95); }
+.tactic-incoming.ok   { background: rgba(228, 203, 157, 0.95); color: var(--rc-primary); }
+.tactic-incoming strong { margin-left: 8px; font-weight: 800; }
+
+/* ==========================================================================
+   FINISH SCREEN — modal shown when player crosses the finish line
+   ========================================================================== */
+.finish-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 12;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  gap: 16px;
+  padding: 28px 20px calc(28px + env(safe-area-inset-bottom));
+  background: linear-gradient(180deg, rgba(12,10,8,.85) 0%, rgba(44, 3, 20, 0.94) 100%);
+  backdrop-filter: blur(10px);
+  color: #fff;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity .35s ease;
+  overflow-y: auto;
+}
+.finish-modal.show { opacity: 1; pointer-events: auto; }
+
+.finish-modal .ribbon {
+  font-family: var(--font-display);
+  font-size: clamp(2rem, 7vw, 3.4rem);
+  color: var(--rc-cream);
+  margin: 0;
+  letter-spacing: -0.01em;
+  line-height: 1;
+}
+.finish-modal .stamp {
+  font-size: .8rem;
+  letter-spacing: .25em;
+  text-transform: uppercase;
+  color: rgba(228,203,157,.7);
+}
+
+.finish-score {
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: clamp(2.6rem, 10vw, 4rem);
+  color: var(--rc-energy);
+  text-shadow: 0 4px 20px rgba(229,55,71,.5);
+  line-height: 1;
+  margin: 4px 0;
+}
+.finish-score small {
+  display: block;
+  font-family: var(--font-body);
+  font-weight: 600;
+  font-size: 0.28em;
+  color: var(--rc-cream-soft);
+  letter-spacing: .2em;
+  text-transform: uppercase;
+  margin-top: 6px;
+}
+
+.finish-stats {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(120px, 1fr));
+  gap: 10px;
+  width: 100%;
+  max-width: 460px;
+}
+.finish-stats .stat {
+  background: rgba(255,255,255,.06);
+  border: 1px solid rgba(228,203,157,.2);
+  border-radius: 12px;
+  padding: 12px 14px;
+  text-align: left;
+}
+.finish-stats .stat .lab {
+  font-size: .68rem;
+  letter-spacing: .2em;
+  text-transform: uppercase;
+  color: rgba(255,255,255,.6);
+}
+.finish-stats .stat .val {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 1.45rem;
+  color: #fff;
+  margin-top: 2px;
+}
+.finish-stats .stat .sub {
+  font-size: .75rem;
+  color: var(--rc-cream-soft);
+  margin-top: 2px;
+}
+
+.finish-style {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  background: rgba(228,203,157,.15);
+  border: 1px solid rgba(228,203,157,.4);
+  border-radius: 999px;
+  padding: 8px 18px;
+  font-family: var(--font-display);
+  font-weight: 700;
+  color: var(--rc-cream);
+  letter-spacing: .04em;
+}
+.finish-style .glyph {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: var(--rc-energy);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.85rem;
+  color: #fff;
+}
+
+.finish-pb {
+  font-size: .85rem;
+  color: var(--rc-cream-soft);
+}
+.finish-pb.new {
+  color: var(--ok);
+  font-weight: 600;
+}
+
+.finish-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  justify-content: center;
+  margin-top: 6px;
+}
+.finish-actions .btn {
+  min-width: 140px;
+}
+
+/* Confetti — drawn as falling colored squares */
+.confetti {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 13;
+  overflow: hidden;
+}
+.confetti span {
+  position: absolute;
+  width: 8px;
+  height: 12px;
+  top: -20px;
+  opacity: 0.95;
+  animation: confetti-fall linear forwards;
+}
+@keyframes confetti-fall {
+  to { transform: translateY(110vh) rotate(720deg); opacity: 0.4; }
+}
+
+/* ==========================================================================
+   LIVE STATS — speed/distance shown beneath HUD timer + monument name
+   ========================================================================== */
+.hud-top .timer-block,
+.hud-top .name-block {
+  display: flex;
+  flex-direction: column;
+  line-height: 1.05;
+}
+.hud-top .timer-sub,
+.hud-top .name-sub {
+  font-size: 0.72rem;
+  color: var(--rc-cream-soft);
+  letter-spacing: 0.06em;
+  margin-top: 2px;
+  font-weight: 500;
+}
+.hud-top .name-block { text-align: right; align-items: flex-end; }
+.hud-top .score-pop {
+  display: inline-block;
+  margin-left: 8px;
+  background: rgba(255,255,255,.12);
+  padding: 2px 8px;
+  border-radius: 999px;
+  font-size: .72rem;
+  color: var(--rc-cream);
+  font-weight: 700;
+  letter-spacing: .04em;
+  transition: transform .25s, background .25s;
+}
+.hud-top .score-pop.bump {
+  transform: scale(1.18);
+  background: var(--ok);
+  color: #fff;
+}
+.hud-top .score-pop.minus {
+  background: var(--crit);
+  color: #fff;
+}
 
 /* ==========================================================================
    Reduced motion
