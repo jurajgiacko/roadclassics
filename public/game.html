@@ -50,12 +50,34 @@
 
   </div>
 
+  <div class="segment-banner" id="segment-banner" aria-live="polite"></div>
+  <div class="tactic-incoming" id="tactic-incoming"></div>
+
+  <div class="tactic-modal" id="tactic-modal" role="dialog" aria-modal="true" aria-label="Taktické rozhodnutie">
+    <div class="ctx" id="tactic-ctx">Rozhodnutie</div>
+    <h3 id="tactic-title">…</h3>
+    <p class="sub" id="tactic-sub"></p>
+    <div class="tactic-options" id="tactic-options"></div>
+    <div class="tactic-countdown">
+      <span id="tactic-counter">3</span>
+      <span class="ring"></span>
+    </div>
+  </div>
+
+  <div class="start-overlay" id="start-overlay">
+    <h2>Pálava</h2>
+    <p>Drž <span class="desktop">medzerník</span><span class="mobile">prst kdekoľvek</span> pre šliapanie. Trafíš ideálnu kadenciu 80–95 RPM.</p>
+    <div class="pulse">Štart</div>
+  </div>
+
   <div class="tap-zone" id="tap-zone" aria-hidden="true"></div>
 
   <script src="/js/analytics.js" defer></script>
   <script src="/js/game/input.js" defer></script>
   <script src="/js/game/ui.js" defer></script>
   <script src="/js/game/monument.js" defer></script>
+  <script src="/js/game/pickups.js" defer></script>
+  <script src="/js/game/tactics.js" defer></script>
   <script src="/js/game/engine.js" defer></script>
 </body>
 </html>

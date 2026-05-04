@@ -276,6 +276,8 @@ body.game {
   inset: 0;
   display: grid;
   grid-template-rows: auto 1fr auto;
+  padding-top: env(safe-area-inset-top);
+  padding-bottom: env(safe-area-inset-bottom);
 }
 
 #game-canvas {
@@ -402,7 +404,7 @@ body.game {
 
 .kbd-hint {
   position: fixed;
-  bottom: 110px;
+  bottom: calc(120px + env(safe-area-inset-bottom));
   left: 50%;
   transform: translateX(-50%);
   padding: 8px 14px;
@@ -413,7 +415,9 @@ body.game {
   z-index: 6;
   backdrop-filter: blur(6px);
   pointer-events: none;
+  transition: opacity .4s;
 }
+.kbd-hint.fade { opacity: 0; }
 .kbd-hint kbd {
   font-family: var(--font-body);
   background: rgba(255,255,255,.15);
@@ -423,11 +427,264 @@ body.game {
   margin: 0 4px;
 }
 @media (max-width: 720px) {
-  .kbd-hint .desktop { display: none; }
+  .kbd-hint .desktop, .start-overlay .desktop { display: none; }
 }
 @media (min-width: 721px) {
-  .kbd-hint .mobile { display: none; }
+  .kbd-hint .mobile, .start-overlay .mobile { display: none; }
 }
+
+/* Segment banner — appears top-center when entering a new segment */
+.segment-banner {
+  position: fixed;
+  top: calc(80px + env(safe-area-inset-top));
+  left: 50%;
+  transform: translate(-50%, -16px);
+  padding: 10px 22px;
+  background: rgba(69, 5, 33, 0.85);
+  color: var(--rc-cream);
+  border: 1px solid rgba(228, 203, 157, 0.4);
+  border-radius: 999px;
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 1rem;
+  letter-spacing: .02em;
+  white-space: nowrap;
+  opacity: 0;
+  z-index: 6;
+  pointer-events: none;
+  transition: transform .4s ease, opacity .4s ease;
+  backdrop-filter: blur(8px);
+  box-shadow: 0 6px 24px rgba(0,0,0,.4);
+}
+.segment-banner.show {
+  opacity: 1;
+  transform: translate(-50%, 0);
+}
+.segment-banner .gradient {
+  display: inline-block;
+  margin-left: 10px;
+  padding: 1px 8px;
+  border-radius: 8px;
+  font-family: var(--font-body);
+  font-size: .8rem;
+  background: rgba(228, 203, 157, 0.18);
+}
+.segment-banner.up   .gradient { color: var(--rc-energy); }
+.segment-banner.down .gradient { color: var(--ok); }
+
+/* Tap-to-start overlay (mobile-friendly onboarding) */
+.start-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 10;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  gap: 14px;
+  padding: 20px;
+  background: linear-gradient(180deg, rgba(12,10,8,.6) 0%, rgba(12,10,8,.85) 100%);
+  backdrop-filter: blur(6px);
+  color: #fff;
+  transition: opacity .35s ease;
+}
+.start-overlay.hide {
+  opacity: 0;
+  pointer-events: none;
+}
+.start-overlay h2 {
+  font-family: var(--font-display);
+  color: var(--rc-cream);
+  margin: 0;
+  font-size: clamp(1.6rem, 6vw, 2.4rem);
+}
+.start-overlay p {
+  margin: 0;
+  max-width: 320px;
+  color: rgba(255,255,255,.78);
+  font-size: .95rem;
+}
+.start-overlay .pulse {
+  width: 84px;
+  height: 84px;
+  border-radius: 50%;
+  background: var(--rc-energy);
+  display: flex; align-items: center; justify-content: center;
+  color: #fff;
+  font-weight: 700;
+  font-size: .85rem;
+  letter-spacing: .12em;
+  text-transform: uppercase;
+  margin-top: 8px;
+  box-shadow: 0 0 0 0 rgba(229,55,71,.7);
+  animation: pulse 1.6s infinite;
+}
+@keyframes pulse {
+  0%   { box-shadow: 0 0 0 0 rgba(229,55,71,.7); transform: scale(1); }
+  70%  { box-shadow: 0 0 0 26px rgba(229,55,71,0); transform: scale(1.04); }
+  100% { box-shadow: 0 0 0 0 rgba(229,55,71,0);   transform: scale(1); }
+}
+
+/* ==========================================================================
+   Pickup floating feedback — "+25 ENERVIT GEL"
+   ========================================================================== */
+.pickup-toast {
+  position: fixed;
+  left: 50%;
+  bottom: calc(180px + env(safe-area-inset-bottom));
+  transform: translateX(-50%);
+  background: var(--en-red);
+  color: #fff;
+  padding: 8px 16px;
+  border-radius: 999px;
+  font-weight: 700;
+  font-size: .95rem;
+  letter-spacing: .04em;
+  z-index: 7;
+  pointer-events: none;
+  box-shadow: 0 10px 30px rgba(227, 6, 19, 0.45);
+  opacity: 0;
+  animation: toast-up 1.6s ease forwards;
+  white-space: nowrap;
+}
+.pickup-toast small {
+  display: block;
+  font-weight: 500;
+  font-size: .7rem;
+  opacity: .85;
+  letter-spacing: .12em;
+  text-transform: uppercase;
+}
+@keyframes toast-up {
+  0%   { opacity: 0; transform: translate(-50%, 14px); }
+  15%  { opacity: 1; transform: translate(-50%, 0); }
+  80%  { opacity: 1; transform: translate(-50%, -36px); }
+  100% { opacity: 0; transform: translate(-50%, -64px); }
+}
+
+/* ==========================================================================
+   Tactics modal — full-screen pause with 3 choices + countdown
+   ========================================================================== */
+.tactic-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 11;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  gap: 18px;
+  padding: 24px 20px calc(24px + env(safe-area-inset-bottom));
+  background: linear-gradient(180deg, rgba(12,10,8,0.78) 0%, rgba(44, 3, 20, 0.88) 100%);
+  backdrop-filter: blur(8px);
+  color: #fff;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity .25s ease;
+}
+.tactic-modal.show { opacity: 1; pointer-events: auto; }
+
+.tactic-modal .ctx {
+  font-size: .8rem;
+  letter-spacing: .2em;
+  text-transform: uppercase;
+  color: var(--rc-cream-soft);
+}
+.tactic-modal h3 {
+  font-family: var(--font-display);
+  color: var(--rc-cream);
+  font-size: clamp(1.4rem, 5vw, 2rem);
+  margin: 0;
+  max-width: 520px;
+}
+.tactic-modal .sub {
+  margin: 0 0 6px;
+  color: rgba(255,255,255,.7);
+  max-width: 420px;
+}
+.tactic-options {
+  width: 100%;
+  max-width: 460px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.tactic-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+  background: rgba(255,255,255,.06);
+  border: 1px solid rgba(228,203,157,.35);
+  color: #fff;
+  border-radius: 14px;
+  padding: 14px 18px;
+  text-align: left;
+  font-family: inherit;
+  font-size: 1.05rem;
+  font-weight: 600;
+  transition: transform .12s, background .15s, border-color .15s;
+  min-height: 60px;
+}
+.tactic-btn:hover, .tactic-btn:focus-visible {
+  background: rgba(228,203,157,.18);
+  transform: translateY(-1px);
+  outline: none;
+}
+.tactic-btn .hint {
+  font-size: .8rem;
+  font-weight: 400;
+  color: var(--rc-cream-soft);
+}
+.tactic-btn[data-id="attack"] { border-color: rgba(229,55,71,.6); }
+.tactic-btn[data-id="attack"]:hover { background: rgba(229,55,71,.18); }
+.tactic-btn[data-id="refuel"] { border-color: rgba(227,6,19,.6); }
+.tactic-btn[data-id="refuel"]:hover { background: rgba(227,6,19,.18); }
+
+.tactic-countdown {
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: 1.1rem;
+  color: var(--rc-cream);
+  letter-spacing: .04em;
+}
+.tactic-countdown .ring {
+  display: inline-block;
+  width: 28px;
+  height: 28px;
+  margin-left: 8px;
+  border: 3px solid rgba(228,203,157,.25);
+  border-top-color: var(--rc-energy);
+  border-radius: 50%;
+  vertical-align: middle;
+  animation: ring-spin 1s linear infinite;
+}
+@keyframes ring-spin { to { transform: rotate(360deg); } }
+
+/* ==========================================================================
+   Tactic incoming hint (small ribbon above HUD)
+   ========================================================================== */
+.tactic-incoming {
+  position: fixed;
+  top: calc(126px + env(safe-area-inset-top));
+  left: 50%;
+  transform: translate(-50%, -10px);
+  background: rgba(229,55,71,.92);
+  color: #fff;
+  padding: 6px 14px;
+  border-radius: 999px;
+  font-size: .82rem;
+  font-weight: 600;
+  letter-spacing: .04em;
+  z-index: 6;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity .25s, transform .25s;
+  box-shadow: 0 6px 18px rgba(229,55,71,.4);
+}
+.tactic-incoming.show { opacity: 1; transform: translate(-50%, 0); }
 
 /* ==========================================================================
    Reduced motion
