@@ -31,12 +31,18 @@
 
   /* ---- Camera + world units ----
      1 worldX unit ≈ 1 logical px. Distance 8000 = 100% trate.
-     Camera sa drží tak, aby cyklista bol na 30 % viewW. */
+     Camera locked to cyclist on BOTH axes: cyclist je vždy na fixnej
+     pozícii (32% viewW, 62% viewH). Svet (terén, props, peloton) sa
+     posúva pod ním — vrátane vertikálneho zdvihu pri stúpaní. */
   const CYCLIST_FRAC_X = 0.32;
+  const CYCLIST_FRAC_Y = 0.62;
   const cyclistScreenX = () => viewW * CYCLIST_FRAC_X;
+  const cyclistScreenY = () => viewH * CYCLIST_FRAC_Y;
 
-  /* World → screen */
   function worldToScreenX(wx) { return cyclistScreenX() + (wx - state.distance); }
+  function elevToScreenY(elev) {
+    return cyclistScreenY() - (elev - elevationAt(state.distance));
+  }
 
   /* ---- World state ---- */
   const state = {
@@ -58,14 +64,12 @@
   };
 
   /* ---- Terrain function ----
-     terrainY(worldX) returns screen-Y where ground meets sky.
+     terrainScreenY(worldX) returns screen-Y where ground meets sky.
      Built from monument.segments + a smooth perlin-like wobble. */
 
   // Cumulative elevation along worldX, in screen-pixels.
   // 1 pct of trate = 80 worldX units. We sum gradient * length per segment.
-  // Visual amplification factor so 1% gradient → ~5px rise per 80 units.
-  const ELEV_AMP = 6;
-  const BASELINE_FRAC = 0.72; // baseline ground line (no elevation)
+  const ELEV_AMP = 4;
 
   function elevationAt(wx) {
     if (!state.monument) return 0;
@@ -74,29 +78,31 @@
     for (const seg of state.monument.segments) {
       if (pct <= seg.from_pct) break;
       const segPct = Math.min(pct, seg.to_pct) - seg.from_pct;
-      // gradient = % grade. Each 1 pct of segment * gradient → small rise.
       e += segPct * seg.gradient * ELEV_AMP;
       if (pct < seg.to_pct) break;
     }
-    /* small organic wobble so it doesn't feel like piecewise-linear */
-    const wob = Math.sin(wx * 0.012) * 4 + Math.cos(wx * 0.04) * 2;
+    /* small organic wobble so it doesn't feel piecewise-linear */
+    const wob = Math.sin(wx * 0.011) * 1.5 + Math.cos(wx * 0.04) * 0.7;
     return e + wob;
   }
 
-  function terrainY(wx) {
-    return viewH * BASELINE_FRAC - elevationAt(wx);
+  /* Terrain Y on screen, given the camera follows the cyclist's elevation. */
+  function terrainScreenY(wx) {
+    return elevToScreenY(elevationAt(wx));
   }
 
   function terrainSlope(wx) {
-    /* radians of terrain at worldX, used to tilt cyclist sprite */
-    const dx = 18;
-    const a = terrainY(wx - dx);
-    const b = terrainY(wx + dx);
-    return Math.atan2(b - a, dx * 2);
+    /* radians of terrain at worldX. Wider sample window smooths out the
+       wobble so the cyclist doesn't jitter on micro-bumps. */
+    const dx = 60;
+    const a = elevationAt(wx - dx);
+    const b = elevationAt(wx + dx);
+    /* slope sign: elevation up = screen up = positive for forward-tilted rider */
+    return Math.atan2(-(b - a), dx * 2);
   }
 
   /* ---- World props (trees, houses, towers, vines) ----
-     Each has worldX. Y is computed as terrainY(worldX) at draw time. */
+     Each has worldX. Y is computed as terrainScreenY(worldX) at draw time. */
   const props = [];   // {kind, worldX, ...}
   const peloton = []; // {relativeAhead, color}
   let nextSpawnAt = 0;
@@ -225,7 +231,7 @@
     for (let i = 0; i <= samples; i++) {
       const sx = (i / samples) * viewW;
       const wx = state.distance + (sx - cyclistScreenX());
-      path.push({ sx, sy: terrainY(wx), wx });
+      path.push({ sx, sy: terrainScreenY(wx), wx });
     }
 
     /* Grass polygon */
@@ -274,7 +280,7 @@
     for (let wx = state.distance - 200; wx < state.distance + viewW + 200; wx += tuftStep) {
       const sx = worldToScreenX(wx);
       if (sx < -10 || sx > viewW + 10) continue;
-      const sy = terrainY(wx) + 16;
+      const sy = terrainScreenY(wx) + 16;
       ctx.fillRect(sx - 1, sy + 4, 2, 8);
       ctx.fillRect(sx + 6, sy + 8, 2, 6);
     }
@@ -284,7 +290,7 @@
   function drawTree(p) {
     const sx = worldToScreenX(p.worldX);
     if (sx < -50 || sx > viewW + 50) return;
-    const sy = terrainY(p.worldX);
+    const sy = terrainScreenY(p.worldX);
     const h = 60 * p.size;
     /* trunk */
     ctx.fillStyle = '#2e1f14';
@@ -299,7 +305,7 @@
   function drawHouse(p) {
     const sx = worldToScreenX(p.worldX);
     if (sx < -80 || sx > viewW + 80) return;
-    const sy = terrainY(p.worldX);
+    const sy = terrainScreenY(p.worldX);
     const w = 64 * p.size;
     const h = 42 * p.size;
     const x = sx - w / 2;
@@ -332,7 +338,7 @@
   function drawTower(p) {
     const sx = worldToScreenX(p.worldX);
     if (sx < -60 || sx > viewW + 60) return;
-    const sy = terrainY(p.worldX);
+    const sy = terrainScreenY(p.worldX);
     const w = 22 * p.size;
     const h = 92 * p.size;
     const x = sx - w / 2;
@@ -356,7 +362,7 @@
   function drawVine(p) {
     const sx = worldToScreenX(p.worldX);
     if (sx < -40 || sx > viewW + 40) return;
-    const sy = terrainY(p.worldX);
+    const sy = terrainScreenY(p.worldX);
     /* a small bush + grape clusters */
     const bunches = p.bunches || 4;
     ctx.fillStyle = '#1d4419';
@@ -387,7 +393,7 @@
   function drawSign(p) {
     const sx = worldToScreenX(p.worldX);
     if (sx < -40 || sx > viewW + 40) return;
-    const sy = terrainY(p.worldX);
+    const sy = terrainScreenY(p.worldX);
     const w = 36;
     const h = 22;
     /* pole */
@@ -420,7 +426,98 @@
     }
   }
 
-  /* ---- Cyclist sprite (side profile, leans with terrain) ---- */
+  /* ---- Cyclist sprite (detailed road racer, side profile, racing tuck)
+     Origin (0,0) = where wheels touch the ground, midway between rear/front.
+     Coordinates roughly in pixels (see drawing scaled by opts.scale).
+  */
+  function drawTube(p1, p2, w, color) {
+    const angle = Math.atan2(p2.y - p1.y, p2.x - p1.x);
+    const len = Math.hypot(p2.x - p1.x, p2.y - p1.y);
+    ctx.save();
+    ctx.translate(p1.x, p1.y);
+    ctx.rotate(angle);
+    ctx.fillStyle = color;
+    ctx.fillRect(0, -w / 2, len, w);
+    /* highlight strip */
+    ctx.fillStyle = 'rgba(255,255,255,0.22)';
+    ctx.fillRect(0, -w / 2, len, w * 0.35);
+    ctx.restore();
+  }
+
+  function drawWheelDetail(cx, cy, r, spinPhase, spinning) {
+    /* tire */
+    ctx.fillStyle = '#1a1a1a';
+    ctx.beginPath();
+    ctx.arc(cx, cy, r, 0, Math.PI * 2);
+    ctx.fill();
+    /* inner rim hole */
+    ctx.fillStyle = 'rgba(0,0,0,0.92)';
+    ctx.beginPath();
+    ctx.arc(cx, cy, r - 1.5, 0, Math.PI * 2);
+    ctx.fill();
+    /* rim ring */
+    ctx.strokeStyle = '#aaa';
+    ctx.lineWidth = 0.6;
+    ctx.beginPath();
+    ctx.arc(cx, cy, r - 1.8, 0, Math.PI * 2);
+    ctx.stroke();
+    /* spokes */
+    ctx.strokeStyle = 'rgba(220,220,220,0.65)';
+    ctx.lineWidth = 0.6;
+    const phase = spinning ? spinPhase : 0;
+    for (let i = 0; i < 6; i++) {
+      const a = phase + (i / 6) * Math.PI * 2;
+      ctx.beginPath();
+      ctx.moveTo(cx + Math.cos(a) * 1.5, cy + Math.sin(a) * 1.5);
+      ctx.lineTo(cx + Math.cos(a) * (r - 2.2), cy + Math.sin(a) * (r - 2.2));
+      ctx.stroke();
+    }
+    /* hub */
+    ctx.fillStyle = '#777';
+    ctx.beginPath(); ctx.arc(cx, cy, 1.6, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = '#222';
+    ctx.beginPath(); ctx.arc(cx, cy, 0.6, 0, Math.PI * 2); ctx.fill();
+  }
+
+  function drawLeg(hip, pedal, isFront) {
+    const dx = pedal.x - hip.x;
+    const dy = pedal.y - hip.y;
+    const dist = Math.hypot(dx, dy);
+    const upper = 13, lower = 13;
+    const c = Math.min(dist, upper + lower - 0.5);
+    const cosA = (upper * upper + c * c - lower * lower) / (2 * upper * c);
+    const angleA = Math.acos(Math.max(-1, Math.min(1, cosA)));
+    const baseAngle = Math.atan2(dy, dx);
+    /* Knee bends FORWARD (positive cross product), so subtract angleA */
+    const kneeAngle = baseAngle - angleA;
+    const knee = {
+      x: hip.x + Math.cos(kneeAngle) * upper,
+      y: hip.y + Math.sin(kneeAngle) * upper
+    };
+    /* Upper leg (cycling shorts black) */
+    ctx.strokeStyle = isFront ? '#1a1a1a' : '#0c0c0c';
+    ctx.lineWidth = 4.4;
+    ctx.lineCap = 'round';
+    ctx.beginPath();
+    ctx.moveTo(hip.x, hip.y);
+    ctx.lineTo(knee.x, knee.y);
+    ctx.stroke();
+    /* Lower leg (calf skin) */
+    ctx.strokeStyle = isFront ? '#caa07a' : '#a08060';
+    ctx.lineWidth = 2.6;
+    ctx.beginPath();
+    ctx.moveTo(knee.x, knee.y);
+    ctx.lineTo(pedal.x - 1, pedal.y - 1);
+    ctx.stroke();
+    /* Cycling shoe (white road shoe) */
+    ctx.fillStyle = '#fff';
+    ctx.beginPath();
+    ctx.ellipse(pedal.x, pedal.y - 0.5, 3.2, 1.4, 0, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = '#222';
+    ctx.fillRect(pedal.x + 2, pedal.y - 1.2, 1, 1.4);
+  }
+
   function drawCyclistAt(sx, sy, opts = {}) {
     const scale = opts.scale || 1;
     const slope = opts.slope || 0;
@@ -428,106 +525,185 @@
     const colorJersey = opts.color || '#e53747';
     const colorAccent = opts.accent || '#fff';
     const isPlayer = opts.isPlayer || false;
+    const frameColor = isPlayer ? '#e4cb9d' : '#bdbdbd';
+    const helmetColor = isPlayer ? '#fafafa' : '#444';
+    const skinColor = '#caa07a';
 
     ctx.save();
-    /* anchor at saddle/pedal axis on ground */
     ctx.translate(sx, sy);
     ctx.rotate(slope);
     ctx.scale(scale, scale);
 
     /* shadow */
-    ctx.fillStyle = 'rgba(0,0,0,0.32)';
+    ctx.fillStyle = 'rgba(0,0,0,0.34)';
     ctx.beginPath();
-    ctx.ellipse(0, 4, 30, 4, 0, 0, Math.PI * 2);
+    ctx.ellipse(0, 1, 30, 4, 0, 0, Math.PI * 2);
     ctx.fill();
 
-    /* wheels */
-    ctx.strokeStyle = '#1a1a1a';
-    ctx.lineWidth = 2.6;
-    ctx.beginPath(); ctx.arc(-22, -10, 11, 0, Math.PI * 2); ctx.stroke();
-    ctx.beginPath(); ctx.arc(22, -10, 11, 0, Math.PI * 2); ctx.stroke();
+    /* anatomy points */
+    const REAR        = { x: -22, y: -10 };
+    const FRONT       = { x:  22, y: -10 };
+    const BB          = { x:  -2, y: -10 };
+    const SADDLE      = { x:  -9, y: -34 };
+    const HEAD_TUBE   = { x:  17, y: -28 };
+    const HOOD        = { x:  22, y: -27 };
+    const HIP         = { x:  -7, y: -34 };
+    const SHOULDER    = { x:   5, y: -41 };
+    const ELBOW       = { x:  14, y: -36 };
+    const HAND        = { x:  21, y: -29 };
+    const HEAD        = { x:  13, y: -44 };
 
-    /* hub dots */
-    ctx.fillStyle = '#1a1a1a';
-    ctx.beginPath(); ctx.arc(-22, -10, 1.5, 0, Math.PI * 2); ctx.fill();
-    ctx.beginPath(); ctx.arc(22, -10, 1.5, 0, Math.PI * 2); ctx.fill();
+    /* wheels (drawn first, behind frame) */
+    drawWheelDetail(REAR.x,  REAR.y,  10, phase * 1.4, opts.spinning);
+    drawWheelDetail(FRONT.x, FRONT.y, 10, phase * 1.4, opts.spinning);
 
-    /* spinning spoke hint */
-    if (opts.spinning) {
-      ctx.strokeStyle = 'rgba(255,255,255,0.35)';
-      ctx.lineWidth = 1;
-      const sp = phase * 1.4;
-      [-22, 22].forEach(wx => {
-        ctx.beginPath();
-        ctx.moveTo(wx - 9 * Math.cos(sp), -10 - 9 * Math.sin(sp));
-        ctx.lineTo(wx + 9 * Math.cos(sp), -10 + 9 * Math.sin(sp));
-        ctx.stroke();
-      });
-    }
+    /* frame tubes — filled rectangles for solid look */
+    drawTube(BB,        HEAD_TUBE, 2.4, frameColor);    // down tube
+    drawTube(SADDLE,    HEAD_TUBE, 2.0, frameColor);    // top tube
+    drawTube(SADDLE,    BB,        2.2, frameColor);    // seat tube
+    drawTube(BB,        REAR,      1.8, frameColor);    // chain stays
+    drawTube(SADDLE,    REAR,      1.6, frameColor);    // seat stays
+    drawTube(HEAD_TUBE, FRONT,     1.6, frameColor);    // fork
 
-    /* frame triangle */
-    ctx.strokeStyle = isPlayer ? '#e4cb9d' : '#cccccc';
-    ctx.lineWidth = 2.4;
+    /* saddle */
+    ctx.fillStyle = '#222';
     ctx.beginPath();
-    ctx.moveTo(-22, -10);     // rear hub
-    ctx.lineTo(0, -22);       // bottom of seat tube (~bottom bracket)
-    ctx.lineTo(22, -10);      // front hub
-    ctx.moveTo(0, -22);
-    ctx.lineTo(-2, -36);      // seat post
-    ctx.moveTo(0, -22);
-    ctx.lineTo(14, -32);      // top tube to head tube
-    ctx.lineTo(22, -10);
+    ctx.ellipse(SADDLE.x, SADDLE.y - 0.5, 4.2, 1.3, 0, 0, Math.PI * 2);
+    ctx.fill();
+
+    /* drop bar tops + brake hood */
+    ctx.strokeStyle = '#222';
+    ctx.lineWidth = 1.5;
+    ctx.lineCap = 'round';
+    ctx.beginPath();
+    ctx.moveTo(HEAD_TUBE.x - 1, HEAD_TUBE.y);
+    ctx.lineTo(HEAD_TUBE.x + 4, HEAD_TUBE.y - 2);
+    ctx.lineTo(HOOD.x, HOOD.y);
+    ctx.stroke();
+    /* brake hood */
+    ctx.fillStyle = '#222';
+    ctx.beginPath();
+    ctx.ellipse(HOOD.x + 0.2, HOOD.y - 0.5, 2, 2.6, 0.32, 0, Math.PI * 2);
+    ctx.fill();
+
+    /* chainring */
+    ctx.fillStyle = '#999';
+    ctx.beginPath(); ctx.arc(BB.x, BB.y, 4.5, 0, Math.PI * 2); ctx.fill();
+    ctx.strokeStyle = '#333';
+    ctx.lineWidth = 0.4;
+    ctx.beginPath(); ctx.arc(BB.x, BB.y, 4.5, 0, Math.PI * 2); ctx.stroke();
+    ctx.fillStyle = '#222';
+    ctx.beginPath(); ctx.arc(BB.x, BB.y, 1.4, 0, Math.PI * 2); ctx.fill();
+
+    /* crank arms + pedals */
+    const crankLen = 7;
+    const pedal1 = { x: BB.x + Math.cos(phase) * crankLen,         y: BB.y + Math.sin(phase) * crankLen };
+    const pedal2 = { x: BB.x + Math.cos(phase + Math.PI) * crankLen,y: BB.y + Math.sin(phase + Math.PI) * crankLen };
+    ctx.strokeStyle = '#444';
+    ctx.lineWidth = 1.6;
+    ctx.beginPath();
+    ctx.moveTo(BB.x, BB.y); ctx.lineTo(pedal1.x, pedal1.y);
+    ctx.moveTo(BB.x, BB.y); ctx.lineTo(pedal2.x, pedal2.y);
     ctx.stroke();
 
-    /* handlebars */
-    ctx.beginPath();
-    ctx.moveTo(14, -32);
-    ctx.lineTo(20, -36);
-    ctx.stroke();
+    /* legs (back leg first so front leg overlaps it) */
+    drawLeg(HIP, pedal2, false);
+    drawLeg(HIP, pedal1, true);
 
-    /* legs (pedaling) — anchored at bottom bracket (0, -22) */
-    const legLen = 14;
-    const knee1 = { x: Math.cos(phase) * 6, y: -22 + Math.sin(phase) * 4 };
-    const knee2 = { x: Math.cos(phase + Math.PI) * 6, y: -22 + Math.sin(phase + Math.PI) * 4 };
-    ctx.strokeStyle = '#1a1a1a';
-    ctx.lineWidth = 2.4;
-    ctx.beginPath();
-    ctx.moveTo(-2, -36); ctx.lineTo(knee1.x, knee1.y); ctx.lineTo(knee1.x + 4, -22 + 8);
-    ctx.moveTo(-2, -36); ctx.lineTo(knee2.x, knee2.y); ctx.lineTo(knee2.x + 4, -22 + 8);
-    ctx.stroke();
-
-    /* torso (jersey, leaning forward) */
+    /* torso — racing tuck silhouette */
     ctx.fillStyle = colorJersey;
     ctx.beginPath();
-    ctx.moveTo(-2, -36);
-    ctx.lineTo(2, -42);
-    ctx.lineTo(14, -36);
-    ctx.lineTo(8, -28);
+    ctx.moveTo(HIP.x - 2, HIP.y + 1);
+    ctx.lineTo(HIP.x - 2, HIP.y - 5);
+    ctx.lineTo(SHOULDER.x - 4, SHOULDER.y + 2);
+    ctx.lineTo(SHOULDER.x + 2, SHOULDER.y - 2);
+    ctx.lineTo(SHOULDER.x + 4, HIP.y - 4);
+    ctx.lineTo(HIP.x + 5, HIP.y - 1);
     ctx.closePath();
     ctx.fill();
-    /* jersey accent */
+
+    /* shading on back */
+    ctx.fillStyle = 'rgba(0,0,0,0.18)';
+    ctx.beginPath();
+    ctx.moveTo(HIP.x - 2, HIP.y + 1);
+    ctx.lineTo(HIP.x - 2, HIP.y - 5);
+    ctx.lineTo(SHOULDER.x - 4, SHOULDER.y + 2);
+    ctx.lineTo(SHOULDER.x - 5, SHOULDER.y + 4);
+    ctx.lineTo(HIP.x - 4, HIP.y);
+    ctx.closePath();
+    ctx.fill();
+
+    /* jersey accent stripe (sponsor band) */
     ctx.fillStyle = colorAccent;
-    ctx.fillRect(-1, -34, 12, 1.5);
+    ctx.fillRect(HIP.x, HIP.y - 5, 7, 1.3);
 
-    /* arms reaching to bars */
+    /* arm: shoulder → elbow → hand */
     ctx.strokeStyle = colorJersey;
-    ctx.lineWidth = 2;
+    ctx.lineWidth = 3;
+    ctx.lineCap = 'round';
     ctx.beginPath();
-    ctx.moveTo(8, -36); ctx.lineTo(20, -36);
+    ctx.moveTo(SHOULDER.x, SHOULDER.y);
+    ctx.lineTo(ELBOW.x, ELBOW.y);
     ctx.stroke();
+    /* forearm (skin, narrower) */
+    ctx.strokeStyle = skinColor;
+    ctx.lineWidth = 2.4;
+    ctx.beginPath();
+    ctx.moveTo(ELBOW.x, ELBOW.y);
+    ctx.lineTo(HAND.x, HAND.y);
+    ctx.stroke();
+    /* glove */
+    ctx.fillStyle = '#222';
+    ctx.beginPath(); ctx.arc(HAND.x, HAND.y, 1.7, 0, Math.PI * 2); ctx.fill();
 
-    /* head + helmet */
-    ctx.fillStyle = isPlayer ? '#e4cb9d' : '#444';
+    /* head — skin */
+    ctx.fillStyle = skinColor;
     ctx.beginPath();
-    ctx.ellipse(8, -44, 5, 4, 0, 0, Math.PI * 2);
+    ctx.arc(HEAD.x, HEAD.y, 4, 0, Math.PI * 2);
     ctx.fill();
-    /* aero tail of helmet */
+    /* jaw shadow */
+    ctx.fillStyle = 'rgba(0,0,0,0.18)';
     ctx.beginPath();
-    ctx.moveTo(8, -44); ctx.lineTo(0, -42); ctx.lineTo(4, -47); ctx.closePath();
+    ctx.arc(HEAD.x + 1.5, HEAD.y + 1.4, 3.1, 0, Math.PI * 2);
     ctx.fill();
-    /* visor / face */
+    /* sunglasses */
     ctx.fillStyle = '#1a1a1a';
-    ctx.fillRect(11, -44, 3, 2);
+    ctx.beginPath();
+    ctx.ellipse(HEAD.x + 2.6, HEAD.y - 0.6, 2.6, 1.1, 0, 0, Math.PI * 2);
+    ctx.fill();
+
+    /* aero helmet — teardrop with tail */
+    ctx.fillStyle = helmetColor;
+    ctx.beginPath();
+    ctx.moveTo(HEAD.x - 5, HEAD.y - 2);
+    ctx.quadraticCurveTo(HEAD.x + 1, HEAD.y - 7.5, HEAD.x + 5.5, HEAD.y - 4);
+    ctx.lineTo(HEAD.x - 1, HEAD.y - 1);
+    ctx.lineTo(HEAD.x - 5, HEAD.y - 2);
+    ctx.closePath();
+    ctx.fill();
+    /* aero tail */
+    ctx.beginPath();
+    ctx.moveTo(HEAD.x - 5, HEAD.y - 2);
+    ctx.lineTo(HEAD.x - 9, HEAD.y - 1.2);
+    ctx.lineTo(HEAD.x - 4, HEAD.y);
+    ctx.closePath();
+    ctx.fill();
+    /* helmet stripe (brand accent) */
+    ctx.strokeStyle = colorJersey;
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.moveTo(HEAD.x - 5, HEAD.y - 4);
+    ctx.quadraticCurveTo(HEAD.x + 1, HEAD.y - 6.5, HEAD.x + 5, HEAD.y - 4);
+    ctx.stroke();
+    /* vent slits */
+    ctx.strokeStyle = 'rgba(0,0,0,0.42)';
+    ctx.lineWidth = 0.5;
+    for (let i = 0; i < 3; i++) {
+      ctx.beginPath();
+      ctx.moveTo(HEAD.x - 2 + i * 2, HEAD.y - 5.6);
+      ctx.lineTo(HEAD.x - 2 + i * 2, HEAD.y - 3.6);
+      ctx.stroke();
+    }
 
     ctx.restore();
   }
@@ -544,10 +720,11 @@
       const wx = state.distance + c.relativeAhead;
       const sx = worldToScreenX(wx);
       if (sx < -60 || sx > viewW + 60) return;
-      const sy = terrainY(wx);
+      const sy = terrainScreenY(wx);
       const slope = terrainSlope(wx);
+      const pelotonScale = Math.max(1.1, Math.min(1.8, viewH / 420));
       drawCyclistAt(sx, sy, {
-        scale: 0.85,
+        scale: pelotonScale,
         slope,
         phase: c.bobPhase,
         color: c.color,
@@ -558,12 +735,14 @@
 
   function drawPlayer() {
     const sx = cyclistScreenX();
-    const sy = terrainY(state.distance);
+    const sy = cyclistScreenY();   // explicit — camera locks player to this Y
     const slope = terrainSlope(state.distance);
     /* breath wobble */
-    const breath = Math.sin(state.elapsed * 2.4) * 0.6;
+    const breath = Math.sin(state.elapsed * 2.4) * 0.5;
+    /* scale relative to viewport so cyclist reads well on phone + desktop */
+    const playerScale = Math.max(1.4, Math.min(2.2, viewH / 360));
     drawCyclistAt(sx, sy + breath, {
-      scale: 1.0,
+      scale: playerScale,
       slope,
       phase: state.pedalPhase,
       color: '#e53747',
@@ -575,7 +754,7 @@
     if (state.cadence > 110) {
       ctx.fillStyle = 'rgba(229, 55, 71, 0.18)';
       ctx.beginPath();
-      ctx.arc(sx, sy - 30, 30, 0, Math.PI * 2);
+      ctx.arc(sx, sy - 40, 50, 0, Math.PI * 2);
       ctx.fill();
     }
   }
@@ -679,7 +858,7 @@
     for (const st of sorted) {
       const sx = worldToScreenX(st.worldX);
       if (sx < -120 || sx > viewW + 120) continue;
-      const sy = terrainY(st.worldX);
+      const sy = terrainScreenY(st.worldX);
       window.rcPickups.renderStation(ctx, st, sx, sy);
     }
   }
