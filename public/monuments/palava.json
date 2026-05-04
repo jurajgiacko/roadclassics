@@ -1,0 +1,55 @@
+{
+  "id": "palava",
+  "name": "Pálava",
+  "subtitle": "Vinařský ráj — Valtice → Reistna",
+  "date": "2026-05-16",
+  "start_location": "Valtice, náměstí Svobody",
+  "real": {
+    "long_km": 125,
+    "long_elevation_m": 1450,
+    "short_km": 64,
+    "short_elevation_m": 800
+  },
+  "ingame": {
+    "duration_s": 180,
+    "scaled_distance_units": 1000
+  },
+  "segments": [
+    { "from_pct": 0,    "to_pct": 12,  "label": "Valtice → Lednice",      "gradient": 0,    "kind": "flat" },
+    { "from_pct": 12,   "to_pct": 28,  "label": "Lednice → Mikulov",      "gradient": 1.2,  "kind": "rolling" },
+    { "from_pct": 28,   "to_pct": 42,  "label": "Stúpanie na Děvín",      "gradient": 7.8,  "kind": "climb" },
+    { "from_pct": 42,   "to_pct": 52,  "label": "Zjazd k Novomlýnům",     "gradient": -5.4, "kind": "descent" },
+    { "from_pct": 52,   "to_pct": 68,  "label": "Novomlýnské nádrže",     "gradient": 0.4,  "kind": "flat" },
+    { "from_pct": 68,   "to_pct": 78,  "label": "Tesarova past",          "gradient": 6.2,  "kind": "climb" },
+    { "from_pct": 78,   "to_pct": 88,  "label": "Bořetice → Bulhary",     "gradient": -2.0, "kind": "rolling" },
+    { "from_pct": 88,   "to_pct": 100, "label": "Reistna kolonáda",       "gradient": 8.4,  "kind": "climb" }
+  ],
+  "pickups": [
+    { "pct": 18, "type": "drink" },
+    { "pct": 35, "type": "gel"   },
+    { "pct": 56, "type": "bar"   },
+    { "pct": 72, "type": "gel"   },
+    { "pct": 86, "type": "drink" },
+    { "pct": 92, "type": "gel"   }
+  ],
+  "tactics": [
+    {
+      "trigger_pct": 33,
+      "context": "Mikulov — pred Děvínom",
+      "options": [
+        { "id": "attack",   "label": "Atak na Děvín",     "cost_energy": 18, "speed_mul": 1.25, "duration_s": 30 },
+        { "id": "tempo",    "label": "Drž tempo",         "cost_energy": 0,  "speed_mul": 1.0,  "duration_s": 30 },
+        { "id": "refuel",   "label": "Doplň energiu",     "cost_energy": -25,"speed_mul": 0.95, "duration_s": 5  }
+      ]
+    },
+    {
+      "trigger_pct": 66,
+      "context": "Pred Tesarovou pasťou",
+      "options": [
+        { "id": "attack",   "label": "Šprint na vrch",    "cost_energy": 22, "speed_mul": 1.3,  "duration_s": 25 },
+        { "id": "tempo",    "label": "Stabilné tempo",    "cost_energy": 0,  "speed_mul": 1.0,  "duration_s": 25 },
+        { "id": "refuel",   "label": "Drink + restart",   "cost_energy": -15,"speed_mul": 0.9,  "duration_s": 4  }
+      ]
+    }
+  ]
+}

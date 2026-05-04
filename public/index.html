@@ -1,0 +1,136 @@
+<!doctype html>
+<html lang="cs">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="theme-color" content="#450521" />
+
+  <title>Road Classics: The Climb — Monumenty, co tě zvednou ze sedla</title>
+  <meta name="description" content="Webová arkádová cyklistická hra pre seriál Road Classics × Enervit. Vyber si monument a otestuj svoje pacing skills." />
+
+  <meta property="og:title" content="Road Classics: The Climb" />
+  <meta property="og:description" content="Monumenty, co tě zvednou ze sedla. Hraj online cez prehliadač." />
+  <meta property="og:type" content="website" />
+  <meta property="og:url" content="https://roadclassics.enervit.online/" />
+  <meta name="twitter:card" content="summary_large_image" />
+
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Fraunces:opsz,wght@9..144,500;9..144,700;9..144,800&display=swap" />
+  <link rel="stylesheet" href="/css/styles.css" />
+
+  <link rel="icon" href="/assets/logos/rc_logo_symbol_db.svg" type="image/svg+xml" />
+</head>
+<body>
+  <header class="topbar">
+    <div class="brands">
+      <img src="/assets/logos/rc_logo_horizontal_sb.svg" alt="Road Classics" />
+      <span class="x">×</span>
+      <img src="/assets/logos/enervit_logo.svg" alt="Enervit" />
+    </div>
+    <nav>
+      <a href="#monuments">Monumenty</a>
+      <a href="/leaderboard.html">Žebříček</a>
+    </nav>
+  </header>
+
+  <section class="hero">
+    <div class="shell">
+      <h1>Road Classics: The Climb</h1>
+      <p class="tagline">Monumenty, co tě zvednou ze sedla.</p>
+      <p style="max-width: 560px; margin: 0 auto; color: var(--rc-cream-soft);">
+        Tri ikonické české trate, jeden cyklista a tvoje schopnosti dávkovať tempo.
+        Trafíš ideálnu kadenciu, ustrážiš energiu a Enervit produkty premeníš na sekundy?
+      </p>
+      <div class="cta-row">
+        <a href="/game.html?monument=palava" class="btn btn-primary" data-event="cta_hero_start">
+          Štart Pálava
+        </a>
+        <a href="#monumenty" class="btn btn-ghost">Ako sa hrá</a>
+      </div>
+    </div>
+  </section>
+
+  <section class="monuments" id="monumenty">
+    <div class="shell">
+      <h2>Vyber si svoj monument</h2>
+      <p class="lead">
+        MVP otvára Pálavu — vinařský ráj s troma kľúčovými stúpaniami. Vysočina a Ještěd
+        prídu v ďalšej sezóne.
+      </p>
+
+      <div class="monument-grid">
+
+        <article class="card is-active" data-monument="palava">
+          <div class="cover palava">
+            <span class="badge">Aktívne · 16. máj 2026</span>
+          </div>
+          <div class="body">
+            <h3>Pálava</h3>
+            <div class="meta">
+              <span><strong>125</strong> km</span>
+              <span><strong>1 450</strong> m ↑</span>
+            </div>
+            <p class="desc">Valtice → Lednice → Mikulov → Děvín → Reistna kolonáda. Vinice,
+              technický zjazd, finálne stúpanie.</p>
+            <div class="card-cta">
+              <a href="/game.html?monument=palava" class="btn btn-primary">Hraj Pálavu</a>
+            </div>
+          </div>
+        </article>
+
+        <article class="card is-soon" data-monument="vysocina">
+          <div class="cover vysocina">
+            <span class="badge">Coming soon · 18. júl 2026</span>
+          </div>
+          <div class="body">
+            <h3>Vysočina</h3>
+            <div class="meta">
+              <span><strong>102</strong> km</span>
+              <span><strong>1 750</strong> m ↑</span>
+            </div>
+            <p class="desc">Žďárské vrchy, Devět skal, Jimramov. Vlnité tempo, hustá lesná
+              krajina.</p>
+            <div class="card-cta">
+              <a href="#" class="btn btn-secondary" aria-disabled="true">Pripravujeme</a>
+            </div>
+          </div>
+        </article>
+
+        <article class="card is-soon" data-monument="jested">
+          <div class="cover jested">
+            <span class="badge">Coming soon · 19. sep 2026</span>
+          </div>
+          <div class="body">
+            <h3>Ještěd</h3>
+            <div class="meta">
+              <span><strong>106</strong> km</span>
+              <span><strong>2 200</strong> m ↑</span>
+            </div>
+            <p class="desc">Liberec, Jizerské hory a finálny výjazd k ikonickému vysielaču
+              na Ještěde.</p>
+            <div class="card-cta">
+              <a href="#" class="btn btn-secondary" aria-disabled="true">Pripravujeme</a>
+            </div>
+          </div>
+        </article>
+
+      </div>
+    </div>
+  </section>
+
+  <footer class="footer">
+    <div class="shell">
+      <div>© 2026 Road Classics × Enervit · Made with espresso a metabolickými gélmi.</div>
+      <div>
+        <a href="https://roadclassics.cz" target="_blank" rel="noopener">roadclassics.cz</a>
+        ·
+        <a href="https://www.enervit.com" target="_blank" rel="noopener">enervit.com</a>
+      </div>
+    </div>
+  </footer>
+
+  <script src="/js/analytics.js" defer></script>
+  <script src="/js/main.js" defer></script>
+</body>
+</html>

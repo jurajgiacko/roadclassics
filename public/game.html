@@ -1,0 +1,61 @@
+<!doctype html>
+<html lang="cs">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no" />
+  <meta name="theme-color" content="#0c0a08" />
+  <title>The Climb — Road Classics × Enervit</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Fraunces:opsz,wght@9..144,700;9..144,800&display=swap" />
+  <link rel="stylesheet" href="/css/styles.css" />
+  <link rel="icon" href="/assets/logos/rc_logo_symbol_db.svg" type="image/svg+xml" />
+</head>
+<body class="game">
+
+  <div class="game-stage">
+
+    <header class="hud-top">
+      <div class="timer" id="hud-timer">00:00.00</div>
+      <div class="profile-mini" id="hud-profile" aria-label="Výškový profil tratu">
+        <svg viewBox="0 0 100 30" preserveAspectRatio="none" id="profile-svg">
+          <path d="M0,28 L0,28" stroke="rgba(228,203,157,0.5)" fill="rgba(228,203,157,0.18)" stroke-width="0.6" />
+        </svg>
+        <div class="pos-marker" id="pos-marker"></div>
+      </div>
+      <div class="monument-name" id="hud-monument">Pálava</div>
+    </header>
+
+    <canvas id="game-canvas"></canvas>
+
+    <div class="kbd-hint">
+      <span class="desktop">Drž <kbd>medzerník</kbd> pre šliapanie</span>
+      <span class="mobile">Drž prst kdekoľvek pre šliapanie</span>
+    </div>
+
+    <footer class="hud-bottom">
+      <div class="gauge">
+        <div class="label">Energia</div>
+        <div class="value" id="hud-energy">100</div>
+        <div class="bar" id="energy-bar"><span style="width:100%"></span></div>
+      </div>
+      <div class="gauge">
+        <div class="label">Kadencia</div>
+        <div class="value"><span id="hud-cadence">0</span> <small style="font-size:.7em;opacity:.6">RPM</small></div>
+        <div class="cadence-zones" id="cadence-zones" data-zone="low">
+          <span></span><span></span><span></span><span></span><span></span>
+        </div>
+      </div>
+    </footer>
+
+  </div>
+
+  <div class="tap-zone" id="tap-zone" aria-hidden="true"></div>
+
+  <script src="/js/analytics.js" defer></script>
+  <script src="/js/game/input.js" defer></script>
+  <script src="/js/game/ui.js" defer></script>
+  <script src="/js/game/monument.js" defer></script>
+  <script src="/js/game/engine.js" defer></script>
+</body>
+</html>

@@ -1,0 +1,14 @@
+{
+  "name": "roadclassics-the-climb",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Webová arkádová cyklistická hra pre seriál Road Classics × Enervit.",
+  "scripts": {
+    "dev": "npx serve public -l 3000",
+    "deploy": "vercel --prod"
+  },
+  "devDependencies": {
+    "serve": "^14.2.3",
+    "vercel": "^39.0.0"
+  }
+}
