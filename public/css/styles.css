@@ -1249,6 +1249,57 @@ body.game {
   color: rgba(255,255,255,.86);
 }
 
+/* Route map preview */
+.scene-map .map-stage {
+  width: 100%;
+  max-width: 620px;
+  background: rgba(8,2,8,0.55);
+  border: 1px solid rgba(228,203,157,.3);
+  border-radius: 14px;
+  padding: 14px;
+  margin-top: 8px;
+}
+.scene-map svg { width: 100%; height: auto; display: block; }
+.map-pin {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 22px;
+  font-family: var(--font-body);
+}
+.map-pin .pin-dot {
+  display: none;
+}
+.map-pin .pin-label {
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--rc-cream);
+  background: rgba(8,2,8,0.85);
+  padding: 3px 8px;
+  border-radius: 999px;
+  white-space: nowrap;
+  letter-spacing: .04em;
+}
+
+/* Mid-race café stop scene */
+.scene-cafe .food-cards { grid-template-columns: 1fr 1fr; }
+@media (min-width: 540px) {
+  .scene-cafe .food-cards { grid-template-columns: 1fr 1fr 1fr 1fr; }
+}
+.food-card.food-skip {
+  background: rgba(0,0,0,0.35);
+  border-style: dashed;
+}
+.food-card-skip {
+  display: flex !important;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--font-display);
+  font-size: 2.6rem;
+  color: var(--rc-cream-soft);
+  background: none !important;
+}
+
 /* Race countdown */
 .race-countdown {
   position: fixed;

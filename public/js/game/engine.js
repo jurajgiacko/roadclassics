@@ -692,6 +692,7 @@
       if (window.rcLandmarks) window.rcLandmarks.tick(state);
       if (state.stations.length) window.rcPickups.collectIfPassed(state, state.stations);
       if (window.rcTactics) window.rcTactics.tick(state, () => {});
+      if (window.rcCafe) window.rcCafe.tick(state);
 
       /* HUD live */
       const SPEED_KMH_SCALE = 38;
@@ -749,6 +750,7 @@
       ]);
     }
     if (window.rcLandmarks) window.rcLandmarks.reset();
+    if (window.rcCafe) window.rcCafe.reset();
 
     try {
       const m = await window.rcMonument.load(opts.monumentId || monumentId);

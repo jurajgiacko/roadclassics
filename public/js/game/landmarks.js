@@ -58,6 +58,8 @@
 
   function tick(state) {
     if (!state || !state.monument) return;
+    /* Skip while another overlay (tactic modal, café stop, finish) is up */
+    if (state.paused || state.finished) return;
     const pct = state.progressPct || 0;
     const zoneAt = (p) => ZONES.findIndex(z => p >= z.from && p < z.to);
     const idx = zoneAt(pct);

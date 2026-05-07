@@ -25,7 +25,7 @@
     `;
     document.body.appendChild(overlay);
     overlay.querySelector('#intro-start').addEventListener('click', () => {
-      window.rcScenes.go('breakfast');
+      window.rcScenes.go('map');
     });
     return overlay;
   }

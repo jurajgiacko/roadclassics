@@ -93,35 +93,35 @@
       "category": "characters",
       "aspect": "1:1",
       "prompt": "Top-down view of a single road cyclist as seen from directly above — red Enervit jersey with cream stripe, aero helmet (oval seen from top), two thin foreshortened wheel ovals, arms reaching forward to drop bars. Compact sprite-icon composition, slight 3/4 angle suggesting forward motion",
-      "style": "Clean character sprite illustration, single isolated subject ONLY, plain transparent or pure off-white background. No road, no scenery, no landscape, no other riders, no buildings, no shadow on ground (subject only). The cyclist must be the entire focus, centered."
+      "style": "Clean character sprite illustration, single isolated subject ONLY, plain transparent or pure off-white background. No road, no scenery, no landscape, no other riders, no buildings. Cyclist viewed from a high REAR-three-quarter angle: camera positioned behind and above the rider, we see the BACK of the helmet and the back of the jersey, the rider is facing AWAY from the viewer riding INTO the scene up-the-frame. Rear wheel toward bottom of frame, front wheel further away at top of frame. The cyclist must be the entire focus, centered."
     },
     {
       "id": "peloton-rider-1",
       "category": "characters",
       "aspect": "1:1",
-      "prompt": "Top-down view of a single road cyclist seen from above — deep burgundy jersey with cream shoulder stripe, aero helmet (oval seen from top), thin foreshortened wheel ovals, arms reaching forward to drop bars. Compact sprite icon",
-      "style": "Clean character sprite illustration, single isolated subject ONLY, plain transparent or pure off-white background. No road, no scenery, no landscape, no other riders, no buildings, no shadow on ground (subject only). The cyclist must be the entire focus, centered."
+      "prompt": "Rear-three-quarter view of a single road cyclist from behind and slightly above — deep burgundy jersey with cream shoulder stripe, aero helmet (oval seen from top), thin foreshortened wheel ovals, arms reaching forward to drop bars. Compact sprite icon",
+      "style": "Clean character sprite illustration, single isolated subject ONLY, plain transparent or pure off-white background. No road, no scenery, no landscape, no other riders, no buildings. Cyclist viewed from a high REAR-three-quarter angle: camera positioned behind and above the rider, we see the BACK of the helmet and the back of the jersey, the rider is facing AWAY from the viewer riding INTO the scene up-the-frame. Rear wheel toward bottom of frame, front wheel further away at top of frame. The cyclist must be the entire focus, centered."
     },
     {
       "id": "peloton-rider-2",
       "category": "characters",
       "aspect": "1:1",
-      "prompt": "Top-down view of a single road cyclist seen from above — wine-red jersey with white shoulder bands, aero helmet, thin foreshortened wheel ovals, arms reaching forward. Compact sprite icon",
-      "style": "Clean character sprite illustration, single isolated subject ONLY, plain transparent or pure off-white background. No road, no scenery, no landscape, no other riders, no buildings, no shadow on ground."
+      "prompt": "Rear-three-quarter view of a single road cyclist from behind and slightly above — wine-red jersey with white shoulder bands, aero helmet, thin foreshortened wheel ovals, arms reaching forward. Compact sprite icon",
+      "style": "Clean character sprite illustration, single isolated subject ONLY, plain transparent or pure off-white background. No road, no scenery, no landscape, no other riders, no buildings. Cyclist viewed from a high REAR-three-quarter angle: camera positioned behind and above the rider, we see the BACK of the helmet and the back of the jersey, the rider is facing AWAY from the viewer riding INTO the scene up-the-frame."
     },
     {
       "id": "peloton-rider-3",
       "category": "characters",
       "aspect": "1:1",
-      "prompt": "Top-down view of a single road cyclist seen from above — dusty pink jersey with cream piping, aero helmet, thin foreshortened wheel ovals, arms reaching forward. Compact sprite icon",
-      "style": "Clean character sprite illustration, single isolated subject ONLY, plain transparent or pure off-white background. No road, no scenery, no landscape, no other riders, no buildings, no shadow on ground."
+      "prompt": "Rear-three-quarter view of a single road cyclist from behind and slightly above — dusty pink jersey with cream piping, aero helmet, thin foreshortened wheel ovals, arms reaching forward. Compact sprite icon",
+      "style": "Clean character sprite illustration, single isolated subject ONLY, plain transparent or pure off-white background. No road, no scenery, no landscape, no other riders, no buildings. Cyclist viewed from a high REAR-three-quarter angle: camera positioned behind and above the rider, we see the BACK of the helmet and the back of the jersey, the rider is facing AWAY from the viewer riding INTO the scene up-the-frame."
     },
     {
       "id": "peloton-rider-4",
       "category": "characters",
       "aspect": "1:1",
-      "prompt": "Top-down view of a single road cyclist seen from above — cream jersey with burgundy side panels, aero helmet, thin foreshortened wheel ovals, arms reaching forward. Compact sprite icon",
-      "style": "Clean character sprite illustration, single isolated subject ONLY, plain transparent or pure off-white background. No road, no scenery, no landscape, no other riders, no buildings, no shadow on ground."
+      "prompt": "Rear-three-quarter view of a single road cyclist from behind and slightly above — cream jersey with burgundy side panels, aero helmet, thin foreshortened wheel ovals, arms reaching forward. Compact sprite icon",
+      "style": "Clean character sprite illustration, single isolated subject ONLY, plain transparent or pure off-white background. No road, no scenery, no landscape, no other riders, no buildings. Cyclist viewed from a high REAR-three-quarter angle: camera positioned behind and above the rider, we see the BACK of the helmet and the back of the jersey, the rider is facing AWAY from the viewer riding INTO the scene up-the-frame."
     },
     {
       "id": "winemaker",
@@ -415,6 +415,33 @@
       "aspect": "1:1",
       "prompt": "Top-down 3/4 view of a small Enervit-red feed-station tent on a small grass patch, folding table in front with rows of dark espresso-brown caffeine gel sachets, one volunteer in red. Compact sprite. A subtle steaming coffee cup on the table to suggest caffeine",
       "style": "Single isolated tent illustration, plain off-white or pure transparent background. No road, no full landscape, no other props beyond the tent + volunteer + table. Subject must fit cleanly in a 1:1 frame for use as a game sprite."
+    },
+    {
+      "id": "cafe-pavlov",
+      "category": "stations",
+      "aspect": "16:9",
+      "prompt": "Roadside Moravian wine-village café terrace at midday — small white-walled cottage with a striped red-and-cream awning, four wooden tables under linden tree shade, a chalkboard menu, two cyclists in lycra leaning their bikes against a fence and stretching, an older waiter in a white apron carrying a tray, vineyards rolling down behind. Inviting break-from-the-race atmosphere"
+    },
+    {
+      "id": "drink-espresso",
+      "category": "stations",
+      "aspect": "1:1",
+      "prompt": "A single small white porcelain espresso cup on a tiny saucer with one sugar cube and a small spoon, dense espresso crema visible. Slight 3/4 angle from above-front, soft drop shadow",
+      "style": "Clean product-icon illustration on plain off-white background. Single isolated subject only. No people, no scenery, no landscape. Soft drop shadow."
+    },
+    {
+      "id": "drink-cappuccino",
+      "category": "stations",
+      "aspect": "1:1",
+      "prompt": "A single white porcelain cup of cappuccino with a delicate latte-art rosetta pattern in the foam, on a saucer with a small spoon. Slight 3/4 angle from above-front, soft drop shadow",
+      "style": "Clean product-icon illustration on plain off-white background. Single isolated subject only. No people, no scenery, no landscape. Soft drop shadow."
+    },
+    {
+      "id": "pastry-kolac",
+      "category": "stations",
+      "aspect": "1:1",
+      "prompt": "A single Moravian svatební koláček (small round wedding pastry) — pale-cream sweet dough base topped with a swirl of plum jam, sprinkled with poppy seeds and a streusel crumb. Seen 3/4 from above on a small ceramic plate. Soft drop shadow",
+      "style": "Clean product-icon illustration on plain off-white background. Single isolated subject only. No people, no scenery, no landscape. Soft drop shadow."
     }
   ]
 }
