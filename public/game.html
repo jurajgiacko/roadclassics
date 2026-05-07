@@ -113,22 +113,29 @@
 
   <div class="confetti" id="confetti" aria-hidden="true"></div>
 
-  <div class="start-overlay" id="start-overlay">
-    <h2>Pálava</h2>
-    <p class="desktop"><kbd>← →</kbd> riadenie · <kbd>medzerník</kbd> boost · trafiť Enervit stánky cez správnu stranu cesty</p>
-    <p class="mobile">Nakloň telefón <strong>↔</strong> na riadenie · prst v strede = boost · zachyt Enervit stánky cez správnu stranu</p>
-    <div class="pulse">Štart</div>
-  </div>
-
   <div class="tap-zone" id="tap-zone" aria-hidden="true"></div>
 
+  <!-- Scene system: must register BEFORE engine.js so engine sees rcScenes -->
   <script src="/js/analytics.js" defer></script>
+  <script src="/js/game/scene-machine.js" defer></script>
+  <script src="/js/game/sprite-renderer.js" defer></script>
   <script src="/js/game/input.js" defer></script>
   <script src="/js/game/ui.js" defer></script>
   <script src="/js/game/monument.js" defer></script>
   <script src="/js/game/pickups.js" defer></script>
   <script src="/js/game/tactics.js" defer></script>
   <script src="/js/game/finish.js" defer></script>
+
+  <!-- Scenes -->
+  <script src="/js/game/scenes/intro.js" defer></script>
+  <script src="/js/game/scenes/breakfast.js" defer></script>
+  <script src="/js/game/scenes/garage.js" defer></script>
+  <script src="/js/game/scenes/packing.js" defer></script>
+  <script src="/js/game/scenes/drive.js" defer></script>
+  <script src="/js/game/scenes/race.js" defer></script>
+
+  <!-- Engine + bootstrap last so all scenes are registered when scene loop starts -->
   <script src="/js/game/engine.js" defer></script>
+  <script src="/js/game/scenes-bootstrap.js" defer></script>
 </body>
 </html>

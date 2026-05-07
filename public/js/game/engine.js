@@ -691,52 +691,27 @@
     requestAnimationFrame(frame);
   }
 
-  /* ---- BOOT + START HANDLER ---- */
-  function attachStartHandler() {
-    const overlay = document.getElementById('start-overlay');
-    const hint = document.querySelector('.kbd-hint');
-    let started = false;
-    function start() {
-      if (started || !state.waiting) return;
-      started = true;
-      state.waiting = false;
-      overlay && overlay.classList.add('hide');
-      setTimeout(() => hint && hint.classList.add('fade'), 2400);
-      /* Request tilt permission on first user gesture (iOS) */
-      if (window.rcInput && window.rcInput.requestTiltPermission) {
-        window.rcInput.requestTiltPermission().then((granted) => {
-          if (granted && window.rcInput.recalibrateTilt) {
-            /* small delay to let first reading arrive, then capture neutral */
-            setTimeout(() => window.rcInput.recalibrateTilt(), 350);
-          }
-        });
-      }
-      window.rcTrack && window.rcTrack('game_start', { monument: monumentId });
-    }
-    window.addEventListener('keydown', (e) => {
-      if (e.code === 'Space' || e.code === 'Enter') start();
-    });
-    const tap = document.getElementById('tap-zone');
-    tap && tap.addEventListener('touchstart', start, { passive: true });
-    tap && tap.addEventListener('mousedown', start);
-    overlay && overlay.addEventListener('click', start);
-  }
+  /* ---- PUBLIC API for scene-machine driven flow ----
+     Race scene calls rcEngine.boot() (idempotent setup) and rcEngine.startRace()
+     once the player has progressed through pre-race stages. */
+  let bootDone = false;
+  let started  = false;
 
-  async function boot() {
+  async function boot(opts = {}) {
+    if (bootDone) return;
+    bootDone = true;
     resize();
     initialSpawn();
     initPeloton();
     requestAnimationFrame(frame);
-    attachStartHandler();
 
     try {
-      const m = await window.rcMonument.load(monumentId);
+      const m = await window.rcMonument.load(opts.monumentId || monumentId);
       state.monument = m;
       window.rcUI.setMonumentName(m.name);
       const pts = window.rcMonument.buildElevationPath(m);
       window.rcMonument.renderProfileSvg(window.rcUI.els.profileSvg, pts);
 
-      /* Build stations: alternate sides of road */
       if (window.rcPickups) {
         state.stations = window.rcPickups.makeStations(m).map((st, i) => ({
           ...st,
@@ -747,17 +722,57 @@
       if (window.rcTactics) window.rcTactics.setup(m);
       if (window.rcFinish)  window.rcFinish.attach(state);
       window.rcUI.setDistance(0, m.real?.long_km || 125);
-
-      const overlay = document.getElementById('start-overlay');
-      if (overlay) {
-        const h = overlay.querySelector('h2');
-        if (h) h.textContent = m.name;
-      }
     } catch (err) {
       console.error('Monument load failed:', err);
       window.rcUI.setMonumentName('Chyba načítania');
     }
   }
 
-  boot();
+  function startRace() {
+    if (started || !state.waiting) return;
+    started = true;
+    state.waiting = false;
+    /* Apply pre-race bonuses from journey if available */
+    const j = window.rcScenes && window.rcScenes.journey && window.rcScenes.journey();
+    if (j) {
+      state.energy = Math.min(100, state.energy + (j.prepBonusEnergy || 0));
+      if (j.tireBonus)    state.boostMul *= (1 + j.tireBonus / 100);
+      if (j.packingBonus) state.score += j.packingBonus;
+    }
+    setTimeout(() => {
+      const hint = document.querySelector('.kbd-hint');
+      hint && hint.classList.add('fade');
+    }, 2400);
+    /* Request tilt permission on first user gesture (the click that started this race scene) */
+    if (window.rcInput && window.rcInput.requestTiltPermission) {
+      window.rcInput.requestTiltPermission().then((granted) => {
+        if (granted && window.rcInput.recalibrateTilt) {
+          setTimeout(() => window.rcInput.recalibrateTilt(), 350);
+        }
+      });
+    }
+    window.rcTrack && window.rcTrack('game_start', { monument: monumentId });
+  }
+
+  function getState() { return state; }
+
+  window.rcEngine = { boot, startRace, getState, monumentId };
+
+  /* Auto-boot for backwards compatibility: if no scene machine drives the
+     game (e.g. someone opens game.html directly without scenes), still
+     work as before — the start-overlay's click triggers startRace via
+     a small fallback wiring. */
+  if (!window.rcScenes) {
+    boot();
+    const overlay = document.getElementById('start-overlay');
+    if (overlay) {
+      overlay.addEventListener('click', () => {
+        startRace();
+        overlay.classList.add('hide');
+      });
+    }
+    window.addEventListener('keydown', (e) => {
+      if (e.code === 'Space' || e.code === 'Enter') startRace();
+    });
+  }
 })();
