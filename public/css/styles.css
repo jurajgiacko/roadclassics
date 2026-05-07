@@ -1062,6 +1062,14 @@ body.game {
   font-weight: 700;
   letter-spacing: .04em;
 }
+/* Per-product subtle background tint behind the icon */
+.pack-chip.pack-gel       .pack-img { background-color: rgba(255,140,0,.20); }
+.pack-chip.pack-caffeine  .pack-img { background-color: rgba(74,32,16,.32); }
+.pack-chip.pack-jelly     .pack-img { background-color: rgba(255,180,80,.22); }
+.pack-chip.pack-chews     .pack-img { background-color: rgba(244,114,148,.22); }
+.pack-chip.pack-bar       .pack-img { background-color: rgba(42,139,58,.20); }
+.pack-chip.pack-drink     .pack-img { background-color: rgba(31,120,209,.20); }
+.pack-chip.pack-banana    .pack-img { background-color: rgba(255,213,68,.22); }
 
 /* Bidon scene — illustration is decorative, gauge below is the actual UI */
 .bidon-stage {

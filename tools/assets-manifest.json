@@ -379,6 +379,57 @@
       "category": "landscapes",
       "aspect": "4:3",
       "prompt": "Iconic silhouette of the Ještěd peak with its distinctive hyperboloid transmitter tower against a dramatic burgundy evening sky, Jizerské hory ridges receding behind, a thin cycling road switchbacking up the mountainside on the left. Empty road, no cyclists in this frame"
+    },
+
+    {
+      "id": "item-gel-caffeine",
+      "category": "stations",
+      "aspect": "1:1",
+      "prompt": "A single Enervit Carbo Gel C2:1PRO Caffeine sachet — narrow tear-top foil pouch, deep espresso-brown color with a small cream label band and a tiny coffee-bean motif (no readable letters, abstract suggestion). Slight 3/4 angle, soft drop shadow",
+      "style": "Clean product-icon illustration on a plain off-white background. Single isolated subject only. Strict no-scenery rule: no landscape, no characters, no people, no buildings, no vineyards, no hills, no sky, no horizon. Just the product on neutral background. Subtle vector shading, glossy highlight."
+    },
+    {
+      "id": "item-jelly",
+      "category": "stations",
+      "aspect": "1:1",
+      "prompt": "A single Enervit Carbo Jelly C2:1PRO Tropical sachet — slightly thicker than a gel, larger flexible pouch in vivid mango-orange-yellow gradient with a cream label stripe (no readable letters). Slight 3/4 angle showing thickness, soft drop shadow",
+      "style": "Clean product-icon illustration on a plain off-white background. Single isolated subject only. Strict no-scenery rule: no landscape, no characters, no people, no buildings, no vineyards, no hills, no sky, no horizon. Just the product on neutral background. Subtle vector shading, glossy highlight."
+    },
+    {
+      "id": "item-chews",
+      "category": "stations",
+      "aspect": "1:1",
+      "prompt": "A small open packet of Enervit Carbo Chews C2:1PRO gummies — flat foil pouch in cream colour with a vivid raspberry-pink accent stripe, three small pink-red gummy candies spilling out at the front of the pouch. Slight 3/4 angle, soft drop shadow",
+      "style": "Clean product-icon illustration on a plain off-white background. Single isolated subject only. Strict no-scenery rule: no landscape, no characters, no people, no buildings, no vineyards, no hills, no sky, no horizon. Just the product on neutral background. Subtle vector shading."
+    },
+    {
+      "id": "item-liquid-gel",
+      "category": "stations",
+      "aspect": "1:1",
+      "prompt": "A single Enervit Liquid Gel C2:1PRO 60 ml bottle — small slim screw-top sport flask, deep amber translucent body showing the gel inside, cream cap. 3/4 angle, glossy highlight, soft drop shadow",
+      "style": "Clean product-icon illustration on a plain off-white background. Single isolated subject only. Strict no-scenery rule: no landscape, no characters, no people, no buildings. Just the product on neutral background. Glossy realistic vector shading."
+    },
+
+    {
+      "id": "station-jelly",
+      "category": "stations",
+      "aspect": "1:1",
+      "prompt": "Top-down 3/4 view of a small Enervit-red feed-station tent on a small grass patch, folding table in front with an open box of orange tropical Carbo Jelly C2:1PRO sachets, one volunteer in red shirt handing one out. Compact sprite",
+      "style": "Single isolated tent illustration, plain off-white or pure transparent background. No road, no full landscape, no other props beyond the tent + volunteer + table. Subject must fit cleanly in a 1:1 frame for use as a game sprite."
+    },
+    {
+      "id": "station-chews",
+      "category": "stations",
+      "aspect": "1:1",
+      "prompt": "Top-down 3/4 view of a small Enervit-red feed-station tent on a small grass patch, folding table in front with packets of pink-cream Carbo Chews C2:1PRO gummy pouches, one volunteer in red. Compact sprite",
+      "style": "Single isolated tent illustration, plain off-white or pure transparent background. No road, no full landscape, no other props beyond the tent + volunteer + table. Subject must fit cleanly in a 1:1 frame for use as a game sprite."
+    },
+    {
+      "id": "station-caffeine",
+      "category": "stations",
+      "aspect": "1:1",
+      "prompt": "Top-down 3/4 view of a small Enervit-red feed-station tent on a small grass patch, folding table in front with rows of dark espresso-brown caffeine gel sachets, one volunteer in red. Compact sprite. A subtle steaming coffee cup on the table to suggest caffeine",
+      "style": "Single isolated tent illustration, plain off-white or pure transparent background. No road, no full landscape, no other props beyond the tent + volunteer + table. Subject must fit cleanly in a 1:1 frame for use as a game sprite."
     }
   ]
 }

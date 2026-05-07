@@ -149,76 +149,80 @@
     }
   }
 
-  /* ---- BACKGROUND (sky + grass) ---- */
+  /* ---- BACKGROUND (full-bleed landscape illustration with cross-fade) ----
+     Matches the @road__classics × @themartinpaseka diorama style. The
+     current zone's landscape PNG covers the entire canvas; when zones
+     change, we crossfade between previous and current art over ~1.2 s. */
+  let bgFromArt = 'valtice-morning';
+  let bgToArt   = 'valtice-morning';
+  let bgFadeT   = 1;            // 0 = fully showing fromArt, 1 = fully showing toArt
+  let bgLastZoneArt = 'valtice-morning';
+
   function drawBackground() {
-    /* Top half = sky-ish gradient suggesting horizon, bottom = grass dark wine */
-    const horizon = viewH * 0.18;
-    const sky = ctx.createLinearGradient(0, 0, 0, horizon);
-    sky.addColorStop(0, PAL.skyTop);
-    sky.addColorStop(1, PAL.skyBot);
-    ctx.fillStyle = sky;
-    ctx.fillRect(0, 0, viewW, horizon);
+    /* Step 1: keep crossfade target aligned with the current landmark zone */
+    const desired = (window.rcLandmarks && window.rcLandmarks.activeArt)
+                  ? window.rcLandmarks.activeArt(state.progressPct || 0)
+                  : 'valtice-morning';
+    if (desired !== bgLastZoneArt) {
+      bgFromArt = bgLastZoneArt;
+      bgToArt   = desired;
+      bgFadeT   = 0;
+      bgLastZoneArt = desired;
+    }
+    bgFadeT = Math.min(1, bgFadeT + 0.012);
 
-    /* Grass */
-    ctx.fillStyle = PAL.grass;
-    ctx.fillRect(0, horizon, viewW, viewH - horizon);
-
-    /* Subtle dot grid texture */
-    ctx.fillStyle = 'rgba(255,255,255,0.025)';
-    const grid = 14;
-    const off = (state.distance * 0.5) % grid;
-    for (let x = 0; x < viewW; x += grid) {
-      for (let y = (horizon - off); y < viewH; y += grid) {
-        ctx.fillRect(x, y, 1, 1);
+    /* Step 2: draw the previous + current art as cover-fit layers */
+    if (window.rcSprites && window.rcSprites.drawCover) {
+      if (bgFadeT < 1 && bgFromArt) {
+        ctx.save();
+        ctx.globalAlpha = 1 - bgFadeT;
+        window.rcSprites.drawCover(ctx, bgFromArt, 0, 0, viewW, viewH);
+        ctx.restore();
       }
+      ctx.save();
+      ctx.globalAlpha = bgFadeT;
+      window.rcSprites.drawCover(ctx, bgToArt, 0, 0, viewW, viewH);
+      ctx.restore();
+    } else {
+      /* Fallback if sprites haven't loaded */
+      ctx.fillStyle = PAL.skyBot;
+      ctx.fillRect(0, 0, viewW, viewH);
     }
 
-    /* Vineyard rows on grass — diagonal hatching effect.
-       Scrolls with player distance. */
-    ctx.strokeStyle = 'rgba(58, 12, 29, 0.45)';
-    ctx.lineWidth = 1;
-    const rowSpacing = 22;
-    const offset = state.distance % rowSpacing;
-    for (let y = horizon; y < viewH; y += rowSpacing) {
-      const ry = y + offset;
-      /* left vineyard */
-      ctx.beginPath();
-      ctx.moveTo(0, ry);
-      ctx.lineTo(centerX() - roadHalfWidth() - 16, ry + 4);
-      ctx.stroke();
-      /* right vineyard */
-      ctx.beginPath();
-      ctx.moveTo(centerX() + roadHalfWidth() + 16, ry + 4);
-      ctx.lineTo(viewW, ry);
-      ctx.stroke();
-    }
+    /* Step 3: subtle dark wash for legibility */
+    const wash = ctx.createLinearGradient(0, 0, 0, viewH);
+    wash.addColorStop(0,   'rgba(8,2,8,0.35)');
+    wash.addColorStop(0.5, 'rgba(8,2,8,0.18)');
+    wash.addColorStop(1,   'rgba(8,2,8,0.55)');
+    ctx.fillStyle = wash;
+    ctx.fillRect(0, 0, viewW, viewH);
   }
 
-  /* ---- ROAD ---- */
+  /* ---- ROAD (semi-transparent overlay so landscape shows through) ---- */
   function drawRoad() {
     const halfW = roadHalfWidth();
     const cx = centerX();
 
-    /* Asphalt strip */
-    ctx.fillStyle = PAL.asphalt;
+    /* Asphalt strip — translucent so the landscape behind shows softly */
+    ctx.fillStyle = 'rgba(14, 3, 9, 0.62)';
     ctx.fillRect(cx - halfW, 0, halfW * 2, viewH);
 
-    /* Slight highlight band in the middle (subtle worn track) */
-    ctx.fillStyle = PAL.asphaltMid;
+    /* Subtle inner highlight */
+    ctx.fillStyle = 'rgba(26, 4, 16, 0.45)';
     ctx.fillRect(cx - halfW + 4, 0, halfW * 2 - 8, viewH);
 
-    /* Edge lines (white-ish) */
-    ctx.strokeStyle = PAL.edgeLine;
-    ctx.lineWidth = 2;
+    /* Edge lines (cream, brighter so they stand out on landscape) */
+    ctx.strokeStyle = 'rgba(240, 212, 160, 0.85)';
+    ctx.lineWidth = 2.5;
     ctx.beginPath();
     ctx.moveTo(cx - halfW + 1, 0); ctx.lineTo(cx - halfW + 1, viewH);
     ctx.moveTo(cx + halfW - 1, 0); ctx.lineTo(cx + halfW - 1, viewH);
     ctx.stroke();
 
-    /* Lane divider dashes (cream) — two lines for 3 lanes, scrolling toward player */
-    ctx.strokeStyle = PAL.laneLine;
-    ctx.lineWidth = 2;
-    const dashLen = 22, gapLen = 22;
+    /* Lane divider dashes scrolling toward the player */
+    ctx.strokeStyle = 'rgba(240, 212, 160, 0.85)';
+    ctx.lineWidth = 2.5;
+    const dashLen = 24, gapLen = 22;
     ctx.setLineDash([dashLen, gapLen]);
     ctx.lineDashOffset = -((state.distance) % (dashLen + gapLen));
     const laneSpacing = (halfW * 2) / 3;
@@ -664,8 +668,10 @@
       state.speed += (targetSpeed - state.speed) * Math.min(1, dt * 3);
 
       /* Forward distance + progress */
-      state.distance += state.speed * 200 * dt;
-      state.progressPct = Math.min(100, state.progressPct + state.speed * (100 / 180) * dt);
+      /* Race duration target ~90s at speed=1.0; baseline 0.7 ⇒ ~130s,
+         frequent boosts pull it down to ~95-100 s actual playtime. */
+      state.distance += state.speed * 320 * dt;
+      state.progressPct = Math.min(100, state.progressPct + state.speed * (100 / 90) * dt);
 
       /* Cadence + pedal animation */
       const targetCadence = pressing ? 110 : 90;

@@ -25,12 +25,13 @@
     { "from_pct": 88,   "to_pct": 100, "label": "Reistna kolonáda",       "gradient": 8.4,  "kind": "climb" }
   ],
   "pickups": [
-    { "pct": 18, "type": "drink" },
-    { "pct": 35, "type": "gel"   },
-    { "pct": 56, "type": "bar"   },
-    { "pct": 72, "type": "gel"   },
-    { "pct": 86, "type": "drink" },
-    { "pct": 92, "type": "gel"   }
+    { "pct": 18, "type": "drink"      },
+    { "pct": 32, "type": "gel"        },
+    { "pct": 45, "type": "jelly"      },
+    { "pct": 58, "type": "bar"        },
+    { "pct": 70, "type": "chews"      },
+    { "pct": 82, "type": "liquid-gel" },
+    { "pct": 92, "type": "caffeine"   }
   ],
   "tactics": [
     {

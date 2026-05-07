@@ -5,21 +5,24 @@
   let overlay = null;
 
   const ART = {
-    gel:    '/assets/scenes/stations/item-gel-sachet.png',
-    bar:    '/assets/scenes/stations/item-bar-wrapped.png',
-    drink:  '/assets/scenes/stations/item-isocarb-sachet.png',
-    banana: '/assets/scenes/prerace/food-banana.png'
+    gel:      '/assets/scenes/stations/item-gel-sachet.png',
+    caffeine: '/assets/scenes/stations/item-gel-caffeine.png',
+    jelly:    '/assets/scenes/stations/item-jelly.png',
+    chews:    '/assets/scenes/stations/item-chews.png',
+    bar:      '/assets/scenes/stations/item-bar-wrapped.png',
+    drink:    '/assets/scenes/stations/item-isocarb-sachet.png',
+    banana:   '/assets/scenes/prerace/food-banana.png'
   };
 
   const TRAY_INITIAL = [
-    { id: 'gel1',   type: 'gel',    label: 'C2:1 GEL'   },
-    { id: 'gel2',   type: 'gel',    label: 'C2:1 GEL'   },
-    { id: 'gel3',   type: 'gel',    label: 'C2:1 GEL'   },
-    { id: 'bar1',   type: 'bar',    label: 'C2:1 BAR'   },
-    { id: 'bar2',   type: 'bar',    label: 'C2:1 BAR'   },
-    { id: 'drink1', type: 'drink',  label: 'ISOCARB'    },
-    { id: 'drink2', type: 'drink',  label: 'ISOCARB'    },
-    { id: 'banana1',type: 'banana', label: 'Banán'      }
+    { id: 'gel1',     type: 'gel',      label: 'C2:1 GEL'  },
+    { id: 'gel2',     type: 'gel',      label: 'C2:1 GEL'  },
+    { id: 'caf1',     type: 'caffeine', label: 'CAFFEINE'  },
+    { id: 'jelly1',   type: 'jelly',    label: 'JELLY'     },
+    { id: 'jelly2',   type: 'jelly',    label: 'JELLY'     },
+    { id: 'chews1',   type: 'chews',    label: 'CHEWS'     },
+    { id: 'bar1',     type: 'bar',      label: 'C2:1 BAR'  },
+    { id: 'banana1',  type: 'banana',   label: 'Banán'     }
   ];
 
   let tray = [];

@@ -6,12 +6,16 @@
    - Pushes a floating toast ("+25 ENERVIT GEL") and applies energy/speed
      boost to game state */
 (function () {
-  /* Real Enervit C2:1PRO product line — the same range that's distributed
-     at Road Classics feed stations IRL. */
+  /* Real Enervit C2:1PRO cycling line — varied across feed stations so the
+     player sees the full range, not just Isocarb everywhere. */
   const PRODUCT = {
-    gel:   { name: 'Carbo Gel C2:1PRO',  short: 'C2:1 GEL',   energy: 25, boost: { mul: 1.05, dur: 10 }, score: 100 },
-    bar:   { name: 'Carbo Bar C2:1PRO',  short: 'C2:1 BAR',   energy: 35, boost: null,                     score: 80  },
-    drink: { name: 'Isocarb C2:1PRO',    short: 'ISOCARB',    energy: 30, boost: { mul: 1.10, dur: 8 },  score: 90  }
+    gel:        { name: 'Carbo Gel C2:1PRO',           short: 'C2:1 GEL',  energy: 25, boost: { mul: 1.05, dur: 10 }, score: 100 },
+    caffeine:   { name: 'Carbo Gel C2:1PRO Caffeine',  short: 'CAFFEINE',  energy: 22, boost: { mul: 1.18, dur: 14 }, score: 130 },
+    jelly:      { name: 'Carbo Jelly C2:1PRO Tropical',short: 'JELLY',     energy: 28, boost: { mul: 1.04, dur: 12 }, score: 105 },
+    chews:      { name: 'Carbo Chews C2:1PRO',         short: 'CHEWS',     energy: 20, boost: { mul: 1.06, dur: 8  }, score: 95  },
+    bar:        { name: 'Carbo Bar C2:1PRO',           short: 'C2:1 BAR',  energy: 35, boost: null,                    score: 80  },
+    'liquid-gel':{name: 'Liquid Gel C2:1PRO 60 ml',    short: 'LIQUID',    energy: 30, boost: { mul: 1.08, dur: 12 }, score: 110 },
+    drink:      { name: 'Isocarb C2:1PRO',             short: 'ISOCARB',   energy: 30, boost: { mul: 1.10, dur: 8  }, score: 90  }
   };
 
   function makeStations(monument) {
@@ -50,9 +54,13 @@
   /* Render: illustrated Enervit feed station sprite at (sx, sy).
      Falls back to a tiny procedural tent if sprites aren't loaded yet. */
   const SPRITE_BY_TYPE = {
-    gel:   'station-gel',
-    bar:   'station-bar',
-    drink: 'station-drink'
+    gel:         'station-gel',
+    caffeine:    'station-caffeine',
+    jelly:       'station-jelly',
+    chews:       'station-chews',
+    bar:         'station-bar',
+    'liquid-gel':'station-gel',  /* reuse gel station illustration for liquid-gel */
+    drink:       'station-drink'
   };
 
   function renderStation(ctx, station, sx, sy) {
