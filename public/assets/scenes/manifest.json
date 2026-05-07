@@ -231,6 +231,69 @@
       "category": "map",
       "aspect": "1:1",
       "prompt": "Achievement badge in cream and wine: a chess knight piece with a cyclist motif, ornamental ribbon, no text, transparent background"
+    },
+    {
+      "id": "food-eggs",
+      "category": "prerace",
+      "aspect": "1:1",
+      "prompt": "A single plate of Moravian-style scrambled eggs (praženica) with two slices of dark rye bread, sprig of chives, pat of butter, small cup of black coffee on the side. Single hero subject seen 3/4 from above, isolated on a clean cream background",
+      "style": "Clean flat-vector product-icon illustration, single isolated subject only, plain pale-cream background, no landscape, no characters, no people, no scenery, no buildings. Soft warm lighting, gentle drop shadow, charming editorial style. Uses a warm cream + burgundy + olive accent palette."
+    },
+    {
+      "id": "food-oats",
+      "category": "prerace",
+      "aspect": "1:1",
+      "prompt": "A bowl of warm oatmeal porridge topped with sliced banana, raspberries, honey drizzle, seeds. Wooden spoon resting on rim. Single hero subject seen 3/4 from above, isolated on a clean cream background",
+      "style": "Clean flat-vector product-icon illustration, single isolated subject only, plain pale-cream background, no landscape, no characters, no people, no scenery, no buildings. Soft warm lighting, gentle drop shadow, charming editorial style. Uses a warm cream + burgundy + olive accent palette."
+    },
+    {
+      "id": "food-croissant",
+      "category": "prerace",
+      "aspect": "1:1",
+      "prompt": "A flaky golden croissant on a small ceramic saucer next to a small espresso cup with crema. Single hero subject seen 3/4 from above, isolated on a clean cream background",
+      "style": "Clean flat-vector product-icon illustration, single isolated subject only, plain pale-cream background, no landscape, no characters, no people, no scenery, no buildings. Soft warm lighting, gentle drop shadow, charming editorial style. Uses a warm cream + burgundy + olive accent palette."
+    },
+    {
+      "id": "item-gel-sachet",
+      "category": "stations",
+      "aspect": "1:1",
+      "prompt": "A single Enervit Carbo Gel sachet — narrow tear-top foil pouch, vivid orange front, with a thin cream label stripe across the middle (no readable lettering, abstract typographic suggestion only). Slight 3/4 angle, soft drop shadow",
+      "style": "Clean product-icon illustration on a plain off-white background. Single isolated subject only. Strict no-scenery rule: no landscape, no characters, no people, no buildings, no vineyards, no hills, no sky, no horizon. Just the product on neutral background. Subtle vector shading, glossy highlight."
+    },
+    {
+      "id": "item-bar-wrapped",
+      "category": "stations",
+      "aspect": "1:1",
+      "prompt": "A single Enervit Carbo Bar — flat rectangular wrapped energy bar with a deep forest-green foil wrapper, subtle grain texture, small cream label band across the front (no readable letters). Slight 3/4 angle",
+      "style": "Clean product-icon illustration on a plain off-white background. Single isolated subject only. Strict no-scenery rule: no landscape, no characters, no people, no buildings, no vineyards, no hills, no sky, no horizon. Just the product on neutral background. Subtle vector shading, soft drop shadow."
+    },
+    {
+      "id": "item-isocarb-sachet",
+      "category": "stations",
+      "aspect": "1:1",
+      "prompt": "A single Enervit Isocarb drink-mix sachet — narrow rectangular foil pouch, deep cobalt blue front, thin cream label stripe (no readable letters). Slight 3/4 angle, soft drop shadow",
+      "style": "Clean product-icon illustration on a plain off-white background. Single isolated subject only. Strict no-scenery rule: no landscape, no characters, no people, no buildings, no vineyards, no hills, no sky, no horizon. Just the product on neutral background. Subtle vector shading, glossy highlight."
+    },
+    {
+      "id": "item-bidon",
+      "category": "stations",
+      "aspect": "1:1",
+      "prompt": "A single cycling water bottle (bidon) standing upright, deep wine-red plastic body, cream pop-up cap, slim athletic curves, small abstract logo band (no readable letters). 3/4 angle, glossy highlight, soft drop shadow",
+      "style": "Clean product-icon illustration on a plain off-white background. Single isolated subject only. Strict no-scenery rule: no landscape, no characters, no people, no buildings, no vineyards, no hills, no sky, no horizon. Just the product on neutral background."
+    },
+    {
+      "id": "bike-wheel",
+      "category": "prerace",
+      "aspect": "1:1",
+      "prompt": "Close-up of a single road-bike front wheel — thin radial spokes, deep-section carbon rim with subtle anodized sheen, smooth black tire, polished hub. 3/4 angle showing depth",
+      "style": "Clean product-icon illustration on a plain off-white background. Single isolated subject only. Strict no-scenery rule: no landscape, no characters, no people, no garage interior, no buildings, no vineyards, no hills. Just the wheel on neutral background. Soft directional light, subtle drop shadow."
+    },
+    {
+      "id": "bike-chain",
+      "category": "prerace",
+      "aspect": "1:1",
+      "prompt": "Close-up of a road-bike rear drivetrain — silver cassette gears with stepped rings and an oily metallic chain wrapping around them. 3/4 angle, gear teeth and chain links clearly visible",
+      "style": "Clean product-icon illustration on a plain off-white background. Single isolated subject only. Strict no-scenery rule: no landscape, no characters, no people, no buildings, no vineyards, no hills. Just the drivetrain on neutral background. Mechanical accuracy, subtle drop shadow."
     }
   ]
 }

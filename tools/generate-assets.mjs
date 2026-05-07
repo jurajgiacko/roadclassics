@@ -52,10 +52,14 @@ function outPath(asset) {
 }
 
 function buildFullPrompt(asset) {
+  /* Per-asset style overrides the global anchor (e.g., for isolated product
+     icons we don't want the landscape/character vignette mood). */
+  const style = asset.style || styleAnchor;
+  const neg   = asset.negativePrompt || negativePrompt;
   return [
     asset.prompt.trim().replace(/\.$/, ''),
-    styleAnchor.trim(),
-    negativePrompt ? `Avoid: ${negativePrompt}` : ''
+    style.trim(),
+    neg ? `Avoid: ${neg}` : ''
   ].filter(Boolean).join('. ') + '.';
 }
 

@@ -12,7 +12,7 @@
     overlay.innerHTML = `
       <div class="bg-art" style="background-image:url('/assets/scenes/prerace/drive-to-start.png')"></div>
       <div class="prerace-shell">
-        <div class="step-pill">Krok 4 / 4 · Cesta na štart</div>
+        <div class="step-pill">Krok 5 / 5 · Cesta na štart</div>
         <h2 class="title-display">Valtice, námestí Svobody</h2>
         <p class="lead" id="drive-summary">…</p>
         <div class="prep-summary" id="prep-summary"></div>
@@ -30,6 +30,7 @@
     if (j.breakfast === 'croissant') lines.push('• Croissant + espresso');
     if (j.bikeChecked) lines.push(`• Pneu ${j.tirePressure?.toFixed?.(1) || '?'} bar (+${j.tireBonus || 0}% rolling)`);
     else               lines.push('• Pneu nedotiahnutá — risk defektu');
+    if (j.bidonLevel != null) lines.push(`• Bidon ${j.bidonLevel.toFixed(2)} L Isocarb (+${j.bidonBonus || 0})`);
     const pl = j.pocketsLoaded || {};
     const pocketSummary = [pl.gel ? `${pl.gel}× gel` : null,
                            pl.bar ? `${pl.bar}× bar` : null,

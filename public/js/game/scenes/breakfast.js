@@ -3,11 +3,11 @@
 (function () {
   let overlay = null;
 
-  /* Each option = ID, label, energy bonus, slight tradeoff explanation. */
+  /* Each option = ID, label, illustrated card, energy bonus, tradeoff. */
   const OPTIONS = [
-    { id: 'eggs',      label: 'Praženica',    sub: '+10 energia · pomalé štartovanie', bonus: 10 },
-    { id: 'oats',      label: 'Ovsená kaša',  sub: '+15 energia · stabilný release',   bonus: 15 },
-    { id: 'croissant', label: 'Croissant + espresso', sub: '+5 energia · rýchly štart, kratší kop', bonus: 5 }
+    { id: 'eggs',      label: 'Praženica',          sub: '+10 energia · pomalé štartovanie',       bonus: 10, img: '/assets/scenes/prerace/food-eggs.png' },
+    { id: 'oats',      label: 'Ovsená kaša',        sub: '+15 energia · stabilný release',         bonus: 15, img: '/assets/scenes/prerace/food-oats.png' },
+    { id: 'croissant', label: 'Croissant + espresso', sub: '+5 energia · rýchly štart, kratší kop', bonus: 5,  img: '/assets/scenes/prerace/food-croissant.png' }
   ];
 
   function build() {
@@ -18,14 +18,15 @@
     overlay.innerHTML = `
       <div class="bg-art" style="background-image:url('/assets/scenes/prerace/kitchen-breakfast.png')"></div>
       <div class="prerace-shell">
-        <div class="step-pill">Krok 1 / 4 · Ráno</div>
+        <div class="step-pill">Krok 1 / 5 · Ráno</div>
         <h2 class="title-display">Čím začneš?</h2>
         <p class="lead">Pálava ťa nepustí na lacno. Vyber raňajky — každé jedlo ti dá rôzny štart.</p>
-        <div class="choices" id="bf-choices">
+        <div class="food-cards" id="bf-cards">
           ${OPTIONS.map(o => `
-            <button type="button" class="choice" data-id="${o.id}">
-              <div class="choice-label">${o.label}</div>
-              <div class="choice-sub">${o.sub}</div>
+            <button type="button" class="food-card" data-id="${o.id}">
+              <div class="food-card-img" style="background-image:url('${o.img}')"></div>
+              <div class="food-card-label">${o.label}</div>
+              <div class="food-card-sub">${o.sub}</div>
             </button>
           `).join('')}
         </div>
@@ -33,7 +34,7 @@
       </div>
     `;
     document.body.appendChild(overlay);
-    overlay.querySelectorAll('.choice').forEach(btn => {
+    overlay.querySelectorAll('.food-card').forEach(btn => {
       btn.addEventListener('click', () => choose(btn.dataset.id));
     });
     return overlay;

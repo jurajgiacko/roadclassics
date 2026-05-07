@@ -4,6 +4,11 @@
 (function () {
   let overlay = null;
   /* Tray and pocket state */
+  const ART = {
+    gel:   '/assets/scenes/stations/item-gel-sachet.png',
+    bar:   '/assets/scenes/stations/item-bar-wrapped.png',
+    drink: '/assets/scenes/stations/item-isocarb-sachet.png'
+  };
   const TRAY = [
     { id: 'gel1',   type: 'gel',   label: 'C2:1 GEL'   },
     { id: 'gel2',   type: 'gel',   label: 'C2:1 GEL'   },
@@ -33,7 +38,7 @@
     overlay.innerHTML = `
       <div class="bg-art" style="background-image:url('/assets/scenes/prerace/jersey-packing.png'); opacity:.18"></div>
       <div class="prerace-shell">
-        <div class="step-pill">Krok 3 / 4 · Tres</div>
+        <div class="step-pill">Krok 3 / 5 · Tres</div>
         <h2 class="title-display">Naplň si dres</h2>
         <p class="lead">Maximálne <strong>2 produkty na vrecko</strong>. Vyvážená sada (1 gel + 1 bar + 1 drink) ti dá najväčší bonus.</p>
         <div class="packing-stage">
@@ -57,14 +62,17 @@
   }
 
   function chip(item) {
-    const span = document.createElement('button');
-    span.type = 'button';
-    span.className = `pack-chip pack-${item.type}`;
-    span.dataset.id = item.id;
-    span.dataset.type = item.type;
-    span.textContent = item.label;
-    span.addEventListener('click', () => moveItem(item.id));
-    return span;
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = `pack-chip pack-${item.type}`;
+    btn.dataset.id = item.id;
+    btn.dataset.type = item.type;
+    btn.innerHTML = `
+      <span class="pack-img" style="background-image:url('${ART[item.type]}')" aria-hidden="true"></span>
+      <span class="pack-name">${item.label}</span>
+    `;
+    btn.addEventListener('click', () => moveItem(item.id));
+    return btn;
   }
 
   function moveItem(id) {

@@ -638,6 +638,59 @@ body.game {
   color: rgba(255,255,255,.7);
 }
 
+/* Breakfast — illustrated food cards */
+.food-cards {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 12px;
+  width: 100%;
+  max-width: 480px;
+  margin-top: 6px;
+}
+@media (min-width: 540px) {
+  .food-cards { grid-template-columns: 1fr 1fr 1fr; }
+}
+.food-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  background: rgba(255,255,255,.08);
+  border: 1px solid rgba(228,203,157,.32);
+  border-radius: 16px;
+  padding: 14px 12px;
+  font-family: inherit;
+  cursor: pointer;
+  transition: transform .15s, background .15s, border-color .15s;
+  color: #fff;
+  text-align: center;
+}
+.food-card:hover, .food-card:focus-visible {
+  transform: translateY(-4px);
+  background: rgba(228,203,157,.18);
+  border-color: var(--rc-cream);
+  outline: none;
+}
+.food-card-img {
+  width: 100%;
+  aspect-ratio: 1 / 1;
+  background-size: contain;
+  background-repeat: no-repeat;
+  background-position: center;
+  filter: drop-shadow(0 6px 14px rgba(0,0,0,.35));
+}
+.food-card-label {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 1.05rem;
+  color: var(--rc-cream);
+}
+.food-card-sub {
+  font-size: .78rem;
+  color: rgba(255,255,255,.72);
+  line-height: 1.4;
+}
+
 /* Bike check (garage) gauge */
 .gauge-wrap {
   width: 100%;
@@ -747,21 +800,81 @@ body.game {
 }
 .pack-chip {
   font-family: inherit;
-  border: 1px solid rgba(255,255,255,.25);
-  border-radius: 8px;
-  padding: 6px 10px;
-  font-size: .75rem;
+  border: 1px solid rgba(228,203,157,.3);
+  border-radius: 10px;
+  padding: 4px 6px 4px 4px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  cursor: pointer;
+  color: var(--rc-cream);
+  background: rgba(255,255,255,.08);
+  transition: transform .12s, background .15s;
+}
+.pack-chip:hover { background: rgba(228,203,157,.16); }
+.pack-chip:active { transform: scale(0.95); }
+.pack-img {
+  width: 28px;
+  height: 28px;
+  background-size: contain;
+  background-repeat: no-repeat;
+  background-position: center;
+  border-radius: 6px;
+  background-color: rgba(255,255,255,.92);
+  flex-shrink: 0;
+}
+.pack-name {
+  font-size: .72rem;
   font-weight: 700;
   letter-spacing: .04em;
-  cursor: pointer;
-  color: #fff;
-  background: rgba(0,0,0,.4);
-  transition: transform .1s;
 }
-.pack-chip:active { transform: scale(0.95); }
-.pack-chip.pack-gel   { background: linear-gradient(180deg, #ff8c00, #d97500); }
-.pack-chip.pack-bar   { background: linear-gradient(180deg, #2a8b3a, #1f6b2c); }
-.pack-chip.pack-drink { background: linear-gradient(180deg, #1f78d1, #185a9c); }
+
+/* Bidon scene */
+.bidon-stage {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  margin-top: 6px;
+}
+.bidon-graphic {
+  position: relative;
+  width: 110px;
+  height: 180px;
+}
+.bidon-img {
+  position: absolute; inset: 0;
+  width: 100%; height: 100%;
+  object-fit: contain;
+  pointer-events: none;
+  z-index: 2;
+}
+.bidon-fill {
+  position: absolute;
+  left: 22%; right: 22%;
+  bottom: 12%;
+  height: 0;
+  background: linear-gradient(180deg, rgba(80,160,255,0.85), rgba(50,110,200,0.95));
+  border-radius: 6px;
+  transition: height .06s linear;
+  z-index: 1;
+}
+.bidon-target {
+  position: absolute;
+  left: 16%; right: 16%;
+  bottom: 70%;
+  height: 14%;
+  background: rgba(25,135,84,0.18);
+  border-top: 1px dashed rgba(25,135,84,.7);
+  border-bottom: 1px dashed rgba(25,135,84,.7);
+  z-index: 3;
+}
+.bidon-readout {
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: 2rem;
+  color: var(--rc-cream);
+}
+.bidon-readout small { font-size: .55em; color: rgba(255,255,255,.6); margin-left: 4px; }
 
 /* Drive transition summary */
 .scene-drive .bg-art { opacity: 0.55; }

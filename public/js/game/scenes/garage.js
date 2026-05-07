@@ -17,7 +17,7 @@
     overlay.innerHTML = `
       <div class="bg-art" style="background-image:url('/assets/scenes/prerace/garage-bike-check.png')"></div>
       <div class="prerace-shell">
-        <div class="step-pill">Krok 2 / 4 · Garáž</div>
+        <div class="step-pill">Krok 2 / 5 · Garáž</div>
         <h2 class="title-display">Naplň pneumatiku</h2>
         <p class="lead">Drž tlačidlo na pumpovanie. <strong>Cieľ ~8.5 bar</strong>. Pretlačíš → praskne, podtlačíš → defekt.</p>
         <div class="gauge-wrap">
@@ -89,7 +89,7 @@
     window.rcTrack && window.rcTrack('prep_choice', { stage: 'garage', pressure, bonus });
 
     /* small delay so player reads the result */
-    setTimeout(() => window.rcScenes.go('packing'), 1600);
+    setTimeout(() => window.rcScenes.go('bidon'), 1600);
   }
 
   async function enter() {
