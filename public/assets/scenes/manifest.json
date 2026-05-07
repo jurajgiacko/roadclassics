@@ -20,7 +20,7 @@
       "id": "mikulov-overlook",
       "category": "landscapes",
       "aspect": "16:9",
-      "prompt": "Mikulov town from above with castle, baroque church and tile-roofed houses cascading down a hillside surrounded by vineyards, cycling road descending into the village, late afternoon light"
+      "prompt": "Aerial 3/4 view of a small Moravian wine-country town nestled on a green hillside, terraced vineyard rows descending below, tile-roofed houses with cream walls, a cycling road switchbacking down toward the village in late afternoon golden light, soft atmospheric mood"
     },
     {
       "id": "devin-climb",
@@ -52,7 +52,6 @@
       "aspect": "1:1",
       "prompt": "Decorative top-down illustrated map of the Pálava region, rolling vineyard hills, Valtice and Mikulov labeled locations as little buildings, Děvín as a stylized peak, Reistna colonnade icon, dotted route path tracing the cycling course, compass rose, Moravian folk-art ornamental border"
     },
-
     {
       "id": "kitchen-breakfast",
       "category": "prerace",
@@ -83,7 +82,6 @@
       "aspect": "16:9",
       "prompt": "Pre-race briefing scene at Valtice town square, hundreds of cyclists in colorful jerseys gathered behind a start banner reading nothing (no text), Road Classics flags fluttering, a dog mascot weaving among cyclists, baroque church in background, sunrise breaking"
     },
-
     {
       "id": "cyclist-player-front",
       "category": "characters",
@@ -138,7 +136,6 @@
       "aspect": "1:1",
       "prompt": "Cute pale beige labrador retriever sitting and panting cheerfully, the Road Classics mascot, friendly expression, transparent background"
     },
-
     {
       "id": "station-gel",
       "category": "stations",
@@ -157,7 +154,6 @@
       "aspect": "1:1",
       "prompt": "3/4 view feed station tent in Enervit red with rows of blue Enervit Isocarb C2:1PRO drink bottles, volunteer holding a bottle up, water cooler in background, transparent background"
     },
-
     {
       "id": "event-flat-tire",
       "category": "events",
@@ -182,7 +178,6 @@
       "aspect": "4:3",
       "prompt": "Local fans cheering on a roadside, an old man in a fedora raising a glass of wine, a child waving a Road Classics flag, dog mascot with bandana, vineyards behind"
     },
-
     {
       "id": "finish-line",
       "category": "finish",
@@ -193,9 +188,8 @@
       "id": "finish-celebration",
       "category": "finish",
       "aspect": "16:9",
-      "prompt": "Post-race celebration at Reistna kolonáda with a group of cyclists clinking glasses of red Moravian wine, sommelier pouring, dog mascot with garland of vines, sun setting behind colonnade columns"
+      "prompt": "Joyful post-race celebration scene at the top of a classical white colonnade at sunset. A group of cyclists raising their arms in triumph, holding water bottles. A pale beige labrador with a vine-leaf garland sits among them. Sunset glow behind the columns. Festive triumphant mood, illustrated character vignette."
     },
-
     {
       "id": "map-pin-station",
       "category": "map",
