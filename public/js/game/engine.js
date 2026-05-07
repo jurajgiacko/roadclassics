@@ -1,23 +1,23 @@
-/* Game engine — Pálava MVP (iterácia 1c: side-scroll Elasto Mania štýl).
-   Cyklista beží zľava doprava po krivke terénu odvodenej priamo
-   z monument.segments. Žiadna perspektíva, žiadne lane offsety —
-   všetko sa rieši v 2D world-space (worldX, worldY).
+/* Game engine — Pálava MVP (iterácia 2: top-down pseudo-isometric arcade).
+   Pohľad zhora/zo zadu (3/4 isometric). Cesta scrolluje smerom k hráčovi
+   (od hora dole), hráč je fixovaný na ~72 % výšky obrazovky. Lateral
+   pohyb cez tilt (mobile) / arrow keys (desktop) / tap-zóny ako fallback.
 
    Zachované moduly:
-     - input.js, ui.js, monument.js — bez zmeny
-     - pickups.js — render staníc prepísaný pre bočný pohľad (drobnosť dolu)
+     - input.js — laneInput() (-1..+1) + isPressing() (boost)
+     - ui.js — HUD updates
+     - monument.js — segments + elevation profile (gradient ovplyvňuje speed/drain)
+     - pickups.js — render station prepísaný pre top-down stranu cesty
      - tactics.js — bez zmeny
+     - finish.js — bez zmeny (otvorí sa pri progress 100 %)
 */
 (function () {
   const canvas = document.getElementById('game-canvas');
   const ctx = canvas.getContext('2d');
-
   const params = new URLSearchParams(location.search);
   const monumentId = params.get('monument') || 'palava';
 
-  let dpr = Math.max(1, window.devicePixelRatio || 1);
-  let viewW = 0, viewH = 0;
-
+  let dpr = 1, viewW = 0, viewH = 0;
   function resize() {
     dpr = Math.max(1, window.devicePixelRatio || 1);
     const rect = canvas.getBoundingClientRect();
@@ -29,34 +29,34 @@
   }
   window.addEventListener('resize', resize);
 
-  /* ---- Camera + world units ----
-     1 worldX unit ≈ 1 logical px. Distance 8000 = 100% trate.
-     Camera locked to cyclist on BOTH axes: cyclist je vždy na fixnej
-     pozícii (32% viewW, 62% viewH). Svet (terén, props, peloton) sa
-     posúva pod ním — vrátane vertikálneho zdvihu pri stúpaní. */
-  const CYCLIST_FRAC_X = 0.32;
-  const CYCLIST_FRAC_Y = 0.62;
-  const cyclistScreenX = () => viewW * CYCLIST_FRAC_X;
-  const cyclistScreenY = () => viewH * CYCLIST_FRAC_Y;
+  /* ---- Camera ---- */
+  const PLAYER_FRAC_Y = 0.72;
+  const playerScreenY = () => viewH * PLAYER_FRAC_Y;
+  const centerX = () => viewW * 0.5;
 
-  function worldToScreenX(wx) { return cyclistScreenX() + (wx - state.distance); }
-  function elevToScreenY(elev) {
-    return cyclistScreenY() - (elev - elevationAt(state.distance));
+  /* ---- Road geometry ---- */
+  /* Road width is roughly 38% of viewport on phone, capped on widescreen. */
+  function roadHalfWidth() { return Math.min(viewW * 0.19, 220); }
+  /* World units: 1 worldY ≈ 1 logical pixel of forward travel.
+     Distance 8000 = 100 % of trate (same scale as before). */
+  function laneToWorldX(laneFrac) {
+    return laneFrac * (roadHalfWidth() - 28); // keep cyclist inside lanes
   }
+  function worldYToScreenY(wy) { return playerScreenY() - (wy - state.distance); }
+  function worldXToScreenX(wx) { return centerX() + wx; }
 
   /* ---- World state ---- */
   const state = {
     monument: null,
-    waiting: true,
-    paused: false,
-    finished: false,
+    waiting: true, paused: false, finished: false,
     elapsed: 0,
-    progressPct: 0,
     distance: 0,
-    cadence: 0,
-    energy: 100,
+    progressPct: 0,
+    laneX: 0,            // smooth lateral position in world-units (-roadHalf .. +roadHalf)
     speed: 0,
     pedalPhase: 0,
+    cadence: 0,
+    energy: 100,
     activeSegment: null,
     boostMul: 1,
     boostUntil: 0,
@@ -66,865 +66,529 @@
     pickupsCollected: 0
   };
 
-  /* ---- Terrain function ----
-     terrainScreenY(worldX) returns screen-Y where ground meets sky.
-     Built from monument.segments + a smooth perlin-like wobble. */
-
-  // Cumulative elevation along worldX, in screen-pixels.
-  // 1 pct of trate = 80 worldX units. We sum gradient * length per segment.
-  const ELEV_AMP = 4;
-
-  function elevationAt(wx) {
-    if (!state.monument) return 0;
-    const pct = wx / 80;
-    let e = 0;
-    for (const seg of state.monument.segments) {
-      if (pct <= seg.from_pct) break;
-      const segPct = Math.min(pct, seg.to_pct) - seg.from_pct;
-      e += segPct * seg.gradient * ELEV_AMP;
-      if (pct < seg.to_pct) break;
-    }
-    /* small organic wobble so it doesn't feel piecewise-linear */
-    const wob = Math.sin(wx * 0.011) * 1.5 + Math.cos(wx * 0.04) * 0.7;
-    return e + wob;
-  }
-
-  /* Terrain Y on screen, given the camera follows the cyclist's elevation. */
-  function terrainScreenY(wx) {
-    return elevToScreenY(elevationAt(wx));
-  }
-
-  function terrainSlope(wx) {
-    /* radians of terrain at worldX. Wider sample window smooths out the
-       wobble so the cyclist doesn't jitter on micro-bumps. */
-    const dx = 60;
-    const a = elevationAt(wx - dx);
-    const b = elevationAt(wx + dx);
-    /* slope sign: elevation up = screen up = positive for forward-tilted rider */
-    return Math.atan2(-(b - a), dx * 2);
-  }
-
-  /* ---- World props (trees, houses, towers, vines) ----
-     Each has worldX. Y is computed as terrainScreenY(worldX) at draw time. */
-  const props = [];   // {kind, worldX, ...}
-  const peloton = []; // {relativeAhead, color}
-  let nextSpawnAt = 0;
-  let nextSignWx = 600;
-
-  function rand(a, b) { return a + Math.random() * (b - a); }
-  function pick(arr) { return arr[Math.floor(Math.random() * arr.length)]; }
-
-  function spawnProp(worldX) {
-    const kind = pick([
-      'tree','tree','tree','tree',
-      'vinecluster','vinecluster',
-      'house','house',
-      'tower',
-      'barrel',
-      'rsign'
-    ]);
-    const detail = {
-      kind,
-      worldX,
-      hue: rand(0, 1),
-      size: rand(0.9, 1.2),
-      colorVariant: Math.floor(rand(0, 3))
-    };
-    if (kind === 'vinecluster') detail.rows = Math.floor(rand(3, 5));
-    props.push(detail);
-  }
-
-  function initialSpawn() {
-    for (let x = 200; x < 4500; x += rand(60, 130)) spawnProp(x);
-  }
-
-  function initPeloton() {
-    /* peloton jersey colors all sit in the burgundy/cream palette so the
-       player's Enervit red jumps out as the focal point */
-    const colors = ['#a52447', '#7c1a32', '#c44470', '#5a1530', '#e4cb9d'];
-    for (let i = 0; i < 4; i++) {
-      peloton.push({
-        relativeAhead: 220 + i * 70 + rand(-20, 20),
-        color: colors[i % colors.length],
-        bobPhase: rand(0, Math.PI * 2)
-      });
-    }
-  }
-
-  /* ---- COLOR PALETTE — Road Classics × @themartinpaseka monochrome wine ---- */
+  /* ---- Palette (carry forward from wine illustration style) ---- */
   const PAL = {
     skyTop:    '#170410',
-    skyMid:    '#2c0814',
-    skyBot:    '#45102a',
-    farHill:   '#5a1530',
-    midHill:   '#3d0c20',
+    skyBot:    '#3a0c1f',
     grass:     '#2a0716',
     grassDark: '#1c0510',
     asphalt:   '#0e0309',
     asphaltMid:'#1a0410',
+    laneLine:  'rgba(228,203,157,0.85)',
+    edgeLine:  'rgba(228,203,157,0.55)',
     cream:     '#f0d4a0',
     creamSoft: '#e4cb9d',
     wineBright:'#a52447',
     winePink:  '#c44470',
-    woodPole:  '#5a3526',
     leafDark:  '#3a0c1d',
     leafMid:   '#5a1530',
     leafLight: '#8a2a4d',
+    woodPole:  '#5a3526',
     roofTile:  '#7a1a30',
-    barrelOak: '#4a2010',
-    barrelBand:'#1a0510'
+    barrelOak: '#4a2010'
   };
 
-  /* ---- Render: SKY (dark monochrome wine) ---- */
-  function drawSky() {
-    const seg = state.activeSegment;
-    /* Subtle segment shift so climbs feel deeper, descents lighter */
-    let top = PAL.skyTop, mid = PAL.skyMid, bot = PAL.skyBot;
-    if (seg) {
-      if (seg.kind === 'climb')   { top = '#0e030a'; mid = '#26050f'; bot = '#3a0c1f'; }
-      if (seg.kind === 'descent') { top = '#1c0612'; mid = '#3a0e1f'; bot = '#52183a'; }
-    }
-    const g = ctx.createLinearGradient(0, 0, 0, viewH);
-    g.addColorStop(0, top);
-    g.addColorStop(0.6, mid);
-    g.addColorStop(1, bot);
-    ctx.fillStyle = g;
-    ctx.fillRect(0, 0, viewW, viewH);
+  /* ---- Elevation (gradient affects speed + drain, no longer drives Y render) ---- */
+  function elevationGradientAt(wy) {
+    if (!state.monument) return 0;
+    const pct = wy / 80;
+    const seg = state.monument.segments.find(s => pct >= s.from_pct && pct < s.to_pct);
+    return seg ? seg.gradient : 0;
+  }
 
-    /* Faint grid pattern overlay (matches the dotted grid in the IG frame) */
-    ctx.fillStyle = 'rgba(255,255,255,0.02)';
+  /* ---- Props (along the side of the road, sorted by worldY) ---- */
+  const props = [];
+  let nextSpawnAt = 0;
+  let nextSignWy = 600;
+
+  function rand(a, b) { return a + Math.random() * (b - a); }
+  function pick(arr) { return arr[Math.floor(Math.random() * arr.length)]; }
+
+  function spawnProp(worldY) {
+    const kind = pick([
+      'tree','tree','tree',
+      'vinerow','vinerow','vinerow',
+      'house',
+      'tower',
+      'barrel',
+      'rsign'
+    ]);
+    const side = Math.random() < 0.5 ? -1 : 1;
+    /* Lateral offset: just outside the road, with some variance */
+    const offset = side * (roadHalfWidth() + 30 + rand(0, 100));
+    const detail = {
+      kind,
+      worldY,
+      worldX: offset,
+      size: rand(0.85, 1.15),
+      colorVariant: Math.floor(rand(0, 3))
+    };
+    if (kind === 'vinerow') {
+      detail.rowLen  = rand(40, 80);
+      detail.rowsCnt = Math.floor(rand(2, 4));
+    }
+    props.push(detail);
+  }
+
+  function initialSpawn() {
+    for (let y = 200; y < 4500; y += rand(40, 90)) spawnProp(y);
+    nextSpawnAt = 4500;
+  }
+
+  /* ---- Peloton (other riders in same race, in different lanes ahead) ---- */
+  const peloton = [];
+  function initPeloton() {
+    const colors = ['#a52447', '#7c1a32', '#c44470', '#5a1530', '#e4cb9d'];
+    for (let i = 0; i < 5; i++) {
+      peloton.push({
+        relativeAhead: 60 + i * 40 + rand(-15, 15),
+        laneX:         rand(-0.7, 0.7),
+        color:         colors[i % colors.length],
+        bobPhase:      rand(0, Math.PI * 2)
+      });
+    }
+  }
+
+  /* ---- BACKGROUND (sky + grass) ---- */
+  function drawBackground() {
+    /* Top half = sky-ish gradient suggesting horizon, bottom = grass dark wine */
+    const horizon = viewH * 0.18;
+    const sky = ctx.createLinearGradient(0, 0, 0, horizon);
+    sky.addColorStop(0, PAL.skyTop);
+    sky.addColorStop(1, PAL.skyBot);
+    ctx.fillStyle = sky;
+    ctx.fillRect(0, 0, viewW, horizon);
+
+    /* Grass */
+    ctx.fillStyle = PAL.grass;
+    ctx.fillRect(0, horizon, viewW, viewH - horizon);
+
+    /* Subtle dot grid texture */
+    ctx.fillStyle = 'rgba(255,255,255,0.025)';
     const grid = 14;
-    const gridOff = (state.distance * 0.05) % grid;
-    for (let x = -gridOff; x < viewW; x += grid) {
-      for (let y = 0; y < viewH; y += grid) {
+    const off = (state.distance * 0.5) % grid;
+    for (let x = 0; x < viewW; x += grid) {
+      for (let y = (horizon - off); y < viewH; y += grid) {
         ctx.fillRect(x, y, 1, 1);
       }
     }
 
-    /* Soft moon disc — replaces the sunset sun */
-    const moonY = viewH * 0.22;
-    const moonX = viewW * 0.78;
-    const moonR = Math.min(viewW, viewH) * 0.05;
-    const sg = ctx.createRadialGradient(moonX, moonY, moonR * 0.3, moonX, moonY, moonR * 1.8);
-    sg.addColorStop(0, 'rgba(240, 212, 160, 0.55)');
-    sg.addColorStop(1, 'rgba(240, 212, 160, 0)');
-    ctx.fillStyle = sg;
-    ctx.fillRect(moonX - moonR * 1.8, moonY - moonR * 1.8, moonR * 3.6, moonR * 3.6);
-    ctx.fillStyle = 'rgba(240, 212, 160, 0.65)';
-    ctx.beginPath();
-    ctx.arc(moonX, moonY, moonR * 0.55, 0, Math.PI * 2);
-    ctx.fill();
-
-    /* Slow clouds — burgundy tinted to fit the night-wine palette */
-    ctx.fillStyle = 'rgba(165, 36, 71, 0.18)';
-    const cloudOff = state.distance * 0.04;
-    for (let i = 0; i < 5; i++) {
-      const cx = ((i * 280 - cloudOff) % (viewW + 400) + viewW + 400) % (viewW + 400) - 100;
-      const cy = viewH * 0.14 + Math.sin(i * 1.7) * 22;
-      drawCloud(cx, cy, 60 + (i % 3) * 22);
-    }
-  }
-
-  function drawCloud(cx, cy, w) {
-    ctx.beginPath();
-    ctx.ellipse(cx, cy, w * 0.6, w * 0.22, 0, 0, Math.PI * 2);
-    ctx.ellipse(cx + w * 0.3, cy - 4, w * 0.4, w * 0.18, 0, 0, Math.PI * 2);
-    ctx.ellipse(cx - w * 0.3, cy + 2, w * 0.35, w * 0.14, 0, 0, Math.PI * 2);
-    ctx.fill();
-  }
-
-  /* ---- Render: HILLS (flat burgundy silhouettes) ---- */
-  function drawFarHills() {
-    ctx.fillStyle = PAL.farHill;
-    const baseY = viewH * 0.55;
-    const off = state.distance * 0.12;
-    ctx.beginPath();
-    ctx.moveTo(0, viewH);
-    for (let x = -50; x <= viewW + 50; x += 26) {
-      const y = baseY
-        + Math.sin((x + off) * 0.011) * 32
-        + Math.cos((x + off) * 0.034) * 14;
-      ctx.lineTo(x, y);
-    }
-    ctx.lineTo(viewW + 50, viewH);
-    ctx.closePath();
-    ctx.fill();
-  }
-
-  function drawMidHills() {
-    ctx.fillStyle = PAL.midHill;
-    const baseY = viewH * 0.66;
-    const off = state.distance * 0.32;
-    ctx.beginPath();
-    ctx.moveTo(0, viewH);
-    for (let x = -30; x <= viewW + 30; x += 22) {
-      const y = baseY
-        + Math.sin((x + off) * 0.018) * 36
-        + Math.cos((x + off) * 0.05) * 10;
-      ctx.lineTo(x, y);
-    }
-    ctx.lineTo(viewW + 30, viewH);
-    ctx.closePath();
-    ctx.fill();
-  }
-
-  /* ---- Render: TERRAIN (flat burgundy with vineyard rows + wooden poles) ---- */
-  function drawTerrain() {
-    const samples = 80;
-    const path = [];
-    for (let i = 0; i <= samples; i++) {
-      const sx = (i / samples) * viewW;
-      const wx = state.distance + (sx - cyclistScreenX());
-      path.push({ sx, sy: terrainScreenY(wx), wx });
-    }
-
-    /* Ground polygon — dark wine */
-    ctx.fillStyle = PAL.grass;
-    ctx.beginPath();
-    ctx.moveTo(0, viewH);
-    for (const p of path) ctx.lineTo(p.sx, p.sy);
-    ctx.lineTo(viewW, viewH);
-    ctx.closePath();
-    ctx.fill();
-
-    /* Darker band below surface for depth */
-    ctx.fillStyle = PAL.grassDark;
-    ctx.beginPath();
-    ctx.moveTo(0, viewH);
-    for (const p of path) ctx.lineTo(p.sx, p.sy + 28);
-    ctx.lineTo(viewW, viewH);
-    ctx.closePath();
-    ctx.fill();
-
-    /* Vineyard rows — parallel diagonal stripes with wooden T-stakes,
-       spaced regularly along the world. Inspired by the IG illustration:
-       receding rows of dark leafy foliage with cream-tipped wood poles. */
-    const rowStep = 40;
-    const rowStart = Math.floor((state.distance - 200) / rowStep) * rowStep;
-    for (let wx = rowStart; wx < state.distance + viewW + 200; wx += rowStep) {
-      const sx = worldToScreenX(wx);
-      if (sx < -20 || sx > viewW + 20) continue;
-      const sy = terrainScreenY(wx);
-      /* Foliage row — short cluster of bumps */
-      ctx.fillStyle = PAL.leafDark;
+    /* Vineyard rows on grass — diagonal hatching effect.
+       Scrolls with player distance. */
+    ctx.strokeStyle = 'rgba(58, 12, 29, 0.45)';
+    ctx.lineWidth = 1;
+    const rowSpacing = 22;
+    const offset = state.distance % rowSpacing;
+    for (let y = horizon; y < viewH; y += rowSpacing) {
+      const ry = y + offset;
+      /* left vineyard */
       ctx.beginPath();
-      ctx.ellipse(sx,        sy + 18, 9, 6, 0, 0, Math.PI * 2);
-      ctx.ellipse(sx + 8,    sy + 16, 6, 5, 0, 0, Math.PI * 2);
-      ctx.ellipse(sx - 8,    sy + 17, 6, 5, 0, 0, Math.PI * 2);
-      ctx.fill();
-      /* Wooden T-stake (post + crossbar with cream tip) */
-      ctx.fillStyle = PAL.woodPole;
-      ctx.fillRect(sx - 0.6, sy + 6, 1.4, 14);
-      ctx.fillStyle = PAL.cream;
-      ctx.fillRect(sx - 1.5, sy + 6, 3, 1.4); /* cream tip */
+      ctx.moveTo(0, ry);
+      ctx.lineTo(centerX() - roadHalfWidth() - 16, ry + 4);
+      ctx.stroke();
+      /* right vineyard */
+      ctx.beginPath();
+      ctx.moveTo(centerX() + roadHalfWidth() + 16, ry + 4);
+      ctx.lineTo(viewW, ry);
+      ctx.stroke();
     }
+  }
 
-    /* Asphalt strip following the surface */
-    ctx.strokeStyle = PAL.asphalt;
-    ctx.lineWidth = 16;
-    ctx.lineJoin = 'round';
-    ctx.lineCap = 'round';
+  /* ---- ROAD ---- */
+  function drawRoad() {
+    const halfW = roadHalfWidth();
+    const cx = centerX();
+
+    /* Asphalt strip */
+    ctx.fillStyle = PAL.asphalt;
+    ctx.fillRect(cx - halfW, 0, halfW * 2, viewH);
+
+    /* Slight highlight band in the middle (subtle worn track) */
+    ctx.fillStyle = PAL.asphaltMid;
+    ctx.fillRect(cx - halfW + 4, 0, halfW * 2 - 8, viewH);
+
+    /* Edge lines (white-ish) */
+    ctx.strokeStyle = PAL.edgeLine;
+    ctx.lineWidth = 2;
     ctx.beginPath();
-    ctx.moveTo(path[0].sx, path[0].sy + 4);
-    for (const p of path) ctx.lineTo(p.sx, p.sy + 4);
+    ctx.moveTo(cx - halfW + 1, 0); ctx.lineTo(cx - halfW + 1, viewH);
+    ctx.moveTo(cx + halfW - 1, 0); ctx.lineTo(cx + halfW - 1, viewH);
     ctx.stroke();
 
-    /* Asphalt highlight (lighter middle band) */
-    ctx.strokeStyle = PAL.asphaltMid;
-    ctx.lineWidth = 10;
-    ctx.beginPath();
-    ctx.moveTo(path[0].sx, path[0].sy + 4);
-    for (const p of path) ctx.lineTo(p.sx, p.sy + 4);
-    ctx.stroke();
-
-    /* Cream dashed center stripe */
-    ctx.strokeStyle = PAL.creamSoft;
-    ctx.lineWidth = 1.6;
-    const dashLen = 14, gapLen = 16;
+    /* Lane divider dashes (cream) — two lines for 3 lanes, scrolling toward player */
+    ctx.strokeStyle = PAL.laneLine;
+    ctx.lineWidth = 2;
+    const dashLen = 22, gapLen = 22;
     ctx.setLineDash([dashLen, gapLen]);
     ctx.lineDashOffset = -((state.distance) % (dashLen + gapLen));
+    const laneSpacing = (halfW * 2) / 3;
     ctx.beginPath();
-    ctx.moveTo(path[0].sx, path[0].sy + 4);
-    for (const p of path) ctx.lineTo(p.sx, p.sy + 4);
+    ctx.moveTo(cx - halfW + laneSpacing, 0); ctx.lineTo(cx - halfW + laneSpacing, viewH);
+    ctx.moveTo(cx - halfW + 2 * laneSpacing, 0); ctx.lineTo(cx - halfW + 2 * laneSpacing, viewH);
     ctx.stroke();
     ctx.setLineDash([]);
   }
 
-  /* ---- Render: PROPS on terrain (flat illustrated style) ---- */
-
-  /* Tree — rounded cluster of overlapping foliage circles in 3 burgundy tones */
+  /* ---- PROPS (drawn from far → near, i.e., higher screen Y last) ---- */
   function drawTree(p) {
-    const sx = worldToScreenX(p.worldX);
-    if (sx < -50 || sx > viewW + 50) return;
-    const sy = terrainScreenY(p.worldX);
-    const h = 60 * p.size;
-    /* trunk */
-    ctx.fillStyle = PAL.barrelOak;
-    ctx.fillRect(sx - 2, sy - h * 0.35, 4, h * 0.35);
-    /* canopy — three layered round cluster (like the IG illustration trees) */
-    const canopyR = h * 0.28;
-    const baseY = sy - h * 0.45;
-    /* darkest back layer */
+    const sx = worldXToScreenX(p.worldX);
+    const sy = worldYToScreenY(p.worldY);
+    if (sx < -50 || sx > viewW + 50 || sy < -40 || sy > viewH + 40) return;
+    const r = 14 * p.size;
+    /* canopy 3-layer round cluster (top-down view) */
     ctx.fillStyle = PAL.leafDark;
-    ctx.beginPath();
-    ctx.arc(sx - canopyR * 0.4, baseY - canopyR * 0.2, canopyR, 0, Math.PI * 2);
-    ctx.arc(sx + canopyR * 0.5, baseY - canopyR * 0.1, canopyR * 0.9, 0, Math.PI * 2);
-    ctx.fill();
-    /* mid layer */
+    ctx.beginPath(); ctx.arc(sx,         sy + 2, r,          0, Math.PI * 2); ctx.fill();
     ctx.fillStyle = PAL.leafMid;
-    ctx.beginPath();
-    ctx.arc(sx, baseY - canopyR * 0.5, canopyR * 0.85, 0, Math.PI * 2);
-    ctx.arc(sx - canopyR * 0.6, baseY - canopyR * 0.1, canopyR * 0.75, 0, Math.PI * 2);
-    ctx.fill();
-    /* light highlight (on top-right) */
+    ctx.beginPath(); ctx.arc(sx + r * 0.2, sy - 1, r * 0.85, 0, Math.PI * 2); ctx.fill();
     ctx.fillStyle = PAL.leafLight;
-    ctx.beginPath();
-    ctx.arc(sx + canopyR * 0.2, baseY - canopyR * 0.7, canopyR * 0.35, 0, Math.PI * 2);
-    ctx.fill();
+    ctx.beginPath(); ctx.arc(sx + r * 0.4, sy - r * 0.3, r * 0.4, 0, Math.PI * 2); ctx.fill();
+    /* tiny shadow underneath for depth */
+    ctx.fillStyle = 'rgba(0,0,0,0.32)';
+    ctx.beginPath(); ctx.ellipse(sx, sy + r * 0.5, r * 0.6, r * 0.18, 0, 0, Math.PI * 2); ctx.fill();
   }
 
-  /* Moravian house — cream walls, burgundy gable roof, tall narrow form */
   function drawHouse(p) {
-    const sx = worldToScreenX(p.worldX);
-    if (sx < -80 || sx > viewW + 80) return;
-    const sy = terrainScreenY(p.worldX);
-    const w = 56 * p.size;
-    const h = 50 * p.size;
-    const x = sx - w / 2;
-    const y = sy - h;
-    /* walls */
-    ctx.fillStyle = PAL.cream;
-    ctx.fillRect(x, y, w, h);
-    /* roof — gable */
+    const sx = worldXToScreenX(p.worldX);
+    const sy = worldYToScreenY(p.worldY);
+    if (sx < -60 || sx > viewW + 60 || sy < -50 || sy > viewH + 50) return;
+    const w = 36 * p.size;
+    const h = 24 * p.size;
+    /* Pseudo-isometric: roof + visible front wall (tiny strip below roof) */
     ctx.fillStyle = PAL.roofTile;
     ctx.beginPath();
-    ctx.moveTo(x - w * 0.08, y);
-    ctx.lineTo(x + w * 0.5, y - h * 0.5);
-    ctx.lineTo(x + w * 1.08, y);
+    ctx.moveTo(sx - w / 2, sy);
+    ctx.lineTo(sx,         sy - h * 0.6);
+    ctx.lineTo(sx + w / 2, sy);
+    ctx.lineTo(sx,         sy + h * 0.6);
     ctx.closePath();
     ctx.fill();
-    /* door */
-    ctx.fillStyle = PAL.barrelOak;
-    ctx.fillRect(x + w * 0.12, y + h * 0.45, w * 0.18, h * 0.55);
-    /* window — small square */
-    ctx.fillStyle = PAL.skyBot;
-    ctx.fillRect(x + w * 0.55, y + h * 0.32, w * 0.25, h * 0.3);
-    /* window cross */
-    ctx.strokeStyle = PAL.cream;
-    ctx.lineWidth = 1;
+    /* Front wall sliver */
+    ctx.fillStyle = PAL.cream;
     ctx.beginPath();
-    ctx.moveTo(x + w * 0.675, y + h * 0.32);
-    ctx.lineTo(x + w * 0.675, y + h * 0.62);
-    ctx.moveTo(x + w * 0.55, y + h * 0.47);
-    ctx.lineTo(x + w * 0.8, y + h * 0.47);
-    ctx.stroke();
+    ctx.moveTo(sx - w / 2, sy);
+    ctx.lineTo(sx + w / 2, sy);
+    ctx.lineTo(sx,         sy + h * 0.55);
+    ctx.closePath();
+    ctx.fill();
+    /* shadow */
+    ctx.fillStyle = 'rgba(0,0,0,0.3)';
+    ctx.beginPath();
+    ctx.ellipse(sx, sy + h * 0.7, w * 0.5, h * 0.18, 0, 0, Math.PI * 2);
+    ctx.fill();
   }
 
-  /* Church tower — tall slim with cream walls, dark spire, Pálava skyline */
   function drawTower(p) {
-    const sx = worldToScreenX(p.worldX);
-    if (sx < -60 || sx > viewW + 60) return;
-    const sy = terrainScreenY(p.worldX);
-    const w = 22 * p.size;
-    const h = 100 * p.size;
-    const x = sx - w / 2;
-    const y = sy - h;
-    /* tower base — cream */
+    const sx = worldXToScreenX(p.worldX);
+    const sy = worldYToScreenY(p.worldY);
+    if (sx < -60 || sx > viewW + 60 || sy < -60 || sy > viewH + 60) return;
+    const r = 10 * p.size;
+    /* Base + tall onion dome — drawn small from above */
     ctx.fillStyle = PAL.cream;
-    ctx.fillRect(x, y + h * 0.28, w, h * 0.72);
-    /* onion-style dome */
+    ctx.beginPath(); ctx.arc(sx, sy, r, 0, Math.PI * 2); ctx.fill();
     ctx.fillStyle = PAL.roofTile;
-    ctx.beginPath();
-    ctx.moveTo(x - w * 0.18, y + h * 0.28);
-    ctx.quadraticCurveTo(x + w * 0.5, y - h * 0.05, x + w * 1.18, y + h * 0.28);
-    ctx.closePath();
-    ctx.fill();
-    /* spire tip */
+    ctx.beginPath(); ctx.arc(sx, sy, r * 0.65, 0, Math.PI * 2); ctx.fill();
     ctx.fillStyle = PAL.barrelOak;
-    ctx.fillRect(x + w * 0.45, y - h * 0.05, w * 0.1, h * 0.08);
-    /* clock face */
-    ctx.fillStyle = PAL.barrelOak;
-    ctx.beginPath();
-    ctx.arc(x + w * 0.5, y + h * 0.5, w * 0.18, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.fillStyle = PAL.cream;
-    ctx.beginPath();
-    ctx.arc(x + w * 0.5, y + h * 0.5, w * 0.04, 0, Math.PI * 2);
-    ctx.fill();
-    /* tall arched window */
-    ctx.fillStyle = PAL.skyBot;
-    ctx.fillRect(x + w * 0.4, y + h * 0.7, w * 0.2, h * 0.18);
+    ctx.beginPath(); ctx.arc(sx, sy, r * 0.18, 0, Math.PI * 2); ctx.fill();
+    /* spike shadow ring */
+    ctx.strokeStyle = 'rgba(0,0,0,0.4)';
+    ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.arc(sx, sy, r * 1.05, 0, Math.PI * 2); ctx.stroke();
   }
 
-  /* Vineyard cluster — multiple parallel rows of foliage with wood T-stakes,
-     drawn as a small farm patch standing on the terrain */
-  function drawVineCluster(p) {
-    const sx = worldToScreenX(p.worldX);
-    if (sx < -50 || sx > viewW + 50) return;
-    const sy = terrainScreenY(p.worldX);
-    const rows = p.rows || 3;
-    /* poles + foliage rows */
-    for (let r = 0; r < rows; r++) {
-      const ry = sy - r * 6 * p.size;
-      const rw = 28 * p.size;
-      /* foliage row (dark burgundy ellipse) */
+  function drawVineRow(p) {
+    const sx = worldXToScreenX(p.worldX);
+    const sy = worldYToScreenY(p.worldY);
+    if (sx < -60 || sx > viewW + 60 || sy < -50 || sy > viewH + 50) return;
+    const len  = p.rowLen || 60;
+    const rows = p.rowsCnt || 3;
+    const dirSign = p.worldX < 0 ? 1 : -1; // rows extend away from road
+    /* Each row = small green ellipse with a wood T-stake at one end */
+    for (let i = 0; i < rows; i++) {
+      const dy = i * 6 * p.size - rows * 3;
+      const x0 = sx;
+      const x1 = sx + dirSign * len * p.size;
+      /* foliage row */
       ctx.fillStyle = PAL.leafDark;
       ctx.beginPath();
-      ctx.ellipse(sx, ry - 4, rw, 5 * p.size, 0, 0, Math.PI * 2);
+      ctx.ellipse((x0 + x1) / 2, sy + dy, Math.abs(x1 - x0) / 2, 4 * p.size, 0, 0, Math.PI * 2);
       ctx.fill();
       /* mid highlight */
       ctx.fillStyle = PAL.leafMid;
       ctx.beginPath();
-      ctx.ellipse(sx + 4, ry - 5, rw * 0.55, 3 * p.size, 0, 0, Math.PI * 2);
+      ctx.ellipse((x0 + x1) / 2, sy + dy - 1, Math.abs(x1 - x0) / 2 * 0.6, 2.5 * p.size, 0, 0, Math.PI * 2);
       ctx.fill();
-      /* poles at each end (T-shaped) */
+      /* T-stake at outer end with cream tip */
       ctx.fillStyle = PAL.woodPole;
-      ctx.fillRect(sx - rw - 1, ry - 8, 1.5, 12);
-      ctx.fillRect(sx + rw - 0.5, ry - 8, 1.5, 12);
-      /* cream tops on poles (like in the illustration) */
+      ctx.fillRect(x1 - 1, sy + dy - 4, 2, 8);
       ctx.fillStyle = PAL.cream;
-      ctx.fillRect(sx - rw - 2.5, ry - 8, 4, 1.4);
-      ctx.fillRect(sx + rw - 2, ry - 8, 4, 1.4);
+      ctx.fillRect(x1 - 2.5, sy + dy - 4, 5, 1.5);
     }
   }
 
-  /* Wine barrel — oak with metal bands, cute roadside motif */
   function drawBarrel(p) {
-    const sx = worldToScreenX(p.worldX);
-    if (sx < -40 || sx > viewW + 40) return;
-    const sy = terrainScreenY(p.worldX);
-    const w = 22 * p.size;
-    const h = 24 * p.size;
-    /* body */
+    const sx = worldXToScreenX(p.worldX);
+    const sy = worldYToScreenY(p.worldY);
+    if (sx < -40 || sx > viewW + 40 || sy < -40 || sy > viewH + 40) return;
+    const r = 9 * p.size;
+    /* Top circle (oak) with band */
     ctx.fillStyle = PAL.barrelOak;
-    ctx.beginPath();
-    ctx.ellipse(sx, sy - h / 2, w / 2, h / 2, 0, 0, Math.PI * 2);
-    ctx.fill();
-    /* metal bands */
-    ctx.fillStyle = PAL.barrelBand;
-    ctx.fillRect(sx - w / 2 + 1, sy - h * 0.7, w - 2, 1.5);
-    ctx.fillRect(sx - w / 2 + 1, sy - h * 0.4, w - 2, 1.5);
-    /* highlight stave */
-    ctx.fillStyle = 'rgba(240, 212, 160, 0.18)';
-    ctx.fillRect(sx - 1, sy - h + 2, 2, h - 4);
-  }
-
-  /* Road Classics R-monogram sign — cream square plate on a stake */
-  function drawRSign(p) {
-    const sx = worldToScreenX(p.worldX);
-    if (sx < -40 || sx > viewW + 40) return;
-    const sy = terrainScreenY(p.worldX);
-    const w = 28;
-    /* stake */
-    ctx.fillStyle = PAL.woodPole;
-    ctx.fillRect(sx - 1, sy - 28, 2, 28);
-    /* plate */
-    ctx.fillStyle = PAL.cream;
-    ctx.fillRect(sx - w / 2, sy - 28 - w, w, w);
-    /* circle border */
+    ctx.beginPath(); ctx.arc(sx, sy, r, 0, Math.PI * 2); ctx.fill();
     ctx.strokeStyle = PAL.skyTop;
     ctx.lineWidth = 1.5;
-    ctx.beginPath();
-    ctx.arc(sx, sy - 28 - w / 2, w * 0.36, 0, Math.PI * 2);
-    ctx.stroke();
-    /* R letter */
-    ctx.fillStyle = PAL.skyTop;
-    ctx.font = '900 16px Fraunces, Georgia, serif';
-    ctx.textAlign = 'center';
-    ctx.textBaseline = 'middle';
-    ctx.fillText('R', sx, sy - 28 - w / 2 + 1);
+    ctx.beginPath(); ctx.arc(sx, sy, r * 0.6, 0, Math.PI * 2); ctx.stroke();
+    ctx.fillStyle = 'rgba(240, 212, 160, 0.18)';
+    ctx.fillRect(sx - 1, sy - r + 2, 2, 2 * r - 4);
   }
 
-  /* Km milestone sign (existing 'sign' kind from maintainWorld) */
-  function drawSign(p) {
-    const sx = worldToScreenX(p.worldX);
-    if (sx < -40 || sx > viewW + 40) return;
-    const sy = terrainScreenY(p.worldX);
-    const w = 36;
-    const h = 22;
-    /* pole */
-    ctx.fillStyle = PAL.woodPole;
-    ctx.fillRect(sx - 1, sy - 28, 2, 28);
-    /* plate (cream with burgundy border) */
+  function drawRSign(p) {
+    const sx = worldXToScreenX(p.worldX);
+    const sy = worldYToScreenY(p.worldY);
+    if (sx < -40 || sx > viewW + 40 || sy < -40 || sy > viewH + 40) return;
+    const w = 22;
+    /* Plate with R */
     ctx.fillStyle = PAL.cream;
-    ctx.fillRect(sx - w / 2, sy - 28 - h, w, h);
-    ctx.strokeStyle = PAL.wineBright;
-    ctx.lineWidth = 2;
-    ctx.strokeRect(sx - w / 2, sy - 28 - h, w, h);
-    /* km text */
+    ctx.fillRect(sx - w / 2, sy - w / 2, w, w);
+    ctx.strokeStyle = PAL.skyTop;
+    ctx.lineWidth = 1.4;
+    ctx.beginPath(); ctx.arc(sx, sy, w * 0.32, 0, Math.PI * 2); ctx.stroke();
     ctx.fillStyle = PAL.skyTop;
-    ctx.font = '700 11px Inter, sans-serif';
+    ctx.font = '900 13px Fraunces, Georgia, serif';
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
-    ctx.fillText(p.label || '', sx, sy - 28 - h / 2);
+    ctx.fillText('R', sx, sy + 1);
+    /* shadow */
+    ctx.fillStyle = 'rgba(0,0,0,0.3)';
+    ctx.beginPath(); ctx.ellipse(sx, sy + w * 0.55, w * 0.4, w * 0.15, 0, 0, Math.PI * 2); ctx.fill();
+  }
+
+  function drawKmSign(p) {
+    const sx = worldXToScreenX(p.worldX);
+    const sy = worldYToScreenY(p.worldY);
+    if (sx < -50 || sx > viewW + 50 || sy < -40 || sy > viewH + 40) return;
+    /* Compact cream plate with wine border + km number */
+    const w = 28, h = 16;
+    ctx.fillStyle = PAL.cream;
+    ctx.fillRect(sx - w / 2, sy - h / 2, w, h);
+    ctx.strokeStyle = PAL.wineBright;
+    ctx.lineWidth = 1.5;
+    ctx.strokeRect(sx - w / 2, sy - h / 2, w, h);
+    ctx.fillStyle = PAL.skyTop;
+    ctx.font = '700 10px Inter, sans-serif';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(p.label || '', sx, sy);
   }
 
   function drawProps() {
-    /* draw far→near by worldX so close props occlude far ones */
-    const sorted = [...props].sort((a, b) => a.worldX - b.worldX);
+    /* Sort by worldY ascending — far first (top of screen), near last (bottom) */
+    const sorted = [...props].sort((a, b) => a.worldY - b.worldY);
     for (const p of sorted) {
       switch (p.kind) {
-        case 'tree':        drawTree(p); break;
-        case 'house':       drawHouse(p); break;
-        case 'tower':       drawTower(p); break;
-        case 'vinecluster': drawVineCluster(p); break;
-        case 'barrel':      drawBarrel(p); break;
-        case 'rsign':       drawRSign(p); break;
-        case 'sign':        drawSign(p); break;
+        case 'tree':    drawTree(p); break;
+        case 'house':   drawHouse(p); break;
+        case 'tower':   drawTower(p); break;
+        case 'vinerow': drawVineRow(p); break;
+        case 'barrel':  drawBarrel(p); break;
+        case 'rsign':   drawRSign(p); break;
+        case 'kmsign':  drawKmSign(p); break;
       }
     }
   }
 
-  /* ---- Cyclist sprite (detailed road racer, side profile, racing tuck)
-     Origin (0,0) = where wheels touch the ground, midway between rear/front.
-     Coordinates roughly in pixels (see drawing scaled by opts.scale).
-  */
-  function drawTube(p1, p2, w, color) {
-    const angle = Math.atan2(p2.y - p1.y, p2.x - p1.x);
-    const len = Math.hypot(p2.x - p1.x, p2.y - p1.y);
-    ctx.save();
-    ctx.translate(p1.x, p1.y);
-    ctx.rotate(angle);
-    ctx.fillStyle = color;
-    ctx.fillRect(0, -w / 2, len, w);
-    /* highlight strip */
-    ctx.fillStyle = 'rgba(255,255,255,0.22)';
-    ctx.fillRect(0, -w / 2, len, w * 0.35);
-    ctx.restore();
-  }
-
-  function drawWheelDetail(cx, cy, r, spinPhase, spinning) {
-    /* tire */
-    ctx.fillStyle = '#1a1a1a';
-    ctx.beginPath();
-    ctx.arc(cx, cy, r, 0, Math.PI * 2);
-    ctx.fill();
-    /* inner rim hole */
-    ctx.fillStyle = 'rgba(0,0,0,0.92)';
-    ctx.beginPath();
-    ctx.arc(cx, cy, r - 1.5, 0, Math.PI * 2);
-    ctx.fill();
-    /* rim ring */
-    ctx.strokeStyle = '#aaa';
-    ctx.lineWidth = 0.6;
-    ctx.beginPath();
-    ctx.arc(cx, cy, r - 1.8, 0, Math.PI * 2);
-    ctx.stroke();
-    /* spokes */
-    ctx.strokeStyle = 'rgba(220,220,220,0.65)';
-    ctx.lineWidth = 0.6;
-    const phase = spinning ? spinPhase : 0;
-    for (let i = 0; i < 6; i++) {
-      const a = phase + (i / 6) * Math.PI * 2;
-      ctx.beginPath();
-      ctx.moveTo(cx + Math.cos(a) * 1.5, cy + Math.sin(a) * 1.5);
-      ctx.lineTo(cx + Math.cos(a) * (r - 2.2), cy + Math.sin(a) * (r - 2.2));
-      ctx.stroke();
-    }
-    /* hub */
-    ctx.fillStyle = '#777';
-    ctx.beginPath(); ctx.arc(cx, cy, 1.6, 0, Math.PI * 2); ctx.fill();
-    ctx.fillStyle = '#222';
-    ctx.beginPath(); ctx.arc(cx, cy, 0.6, 0, Math.PI * 2); ctx.fill();
-  }
-
-  function drawLeg(hip, pedal, isFront) {
-    const dx = pedal.x - hip.x;
-    const dy = pedal.y - hip.y;
-    const dist = Math.hypot(dx, dy);
-    const upper = 13, lower = 13;
-    const c = Math.min(dist, upper + lower - 0.5);
-    const cosA = (upper * upper + c * c - lower * lower) / (2 * upper * c);
-    const angleA = Math.acos(Math.max(-1, Math.min(1, cosA)));
-    const baseAngle = Math.atan2(dy, dx);
-    /* Knee bends FORWARD (positive cross product), so subtract angleA */
-    const kneeAngle = baseAngle - angleA;
-    const knee = {
-      x: hip.x + Math.cos(kneeAngle) * upper,
-      y: hip.y + Math.sin(kneeAngle) * upper
-    };
-    /* Upper leg (cycling shorts black) */
-    ctx.strokeStyle = isFront ? '#1a1a1a' : '#0c0c0c';
-    ctx.lineWidth = 4.4;
-    ctx.lineCap = 'round';
-    ctx.beginPath();
-    ctx.moveTo(hip.x, hip.y);
-    ctx.lineTo(knee.x, knee.y);
-    ctx.stroke();
-    /* Lower leg (calf skin) */
-    ctx.strokeStyle = isFront ? '#caa07a' : '#a08060';
-    ctx.lineWidth = 2.6;
-    ctx.beginPath();
-    ctx.moveTo(knee.x, knee.y);
-    ctx.lineTo(pedal.x - 1, pedal.y - 1);
-    ctx.stroke();
-    /* Cycling shoe (white road shoe) */
-    ctx.fillStyle = '#fff';
-    ctx.beginPath();
-    ctx.ellipse(pedal.x, pedal.y - 0.5, 3.2, 1.4, 0, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.fillStyle = '#222';
-    ctx.fillRect(pedal.x + 2, pedal.y - 1.2, 1, 1.4);
-  }
-
-  function drawCyclistAt(sx, sy, opts = {}) {
+  /* ---- CYCLIST SPRITE (top-down) ---- */
+  function drawCyclistTopDown(sx, sy, opts = {}) {
     const scale = opts.scale || 1;
-    const slope = opts.slope || 0;
     const phase = opts.phase || 0;
     const colorJersey = opts.color || '#e53747';
     const colorAccent = opts.accent || '#fff';
     const isPlayer = opts.isPlayer || false;
-    const frameColor = isPlayer ? '#e4cb9d' : '#bdbdbd';
-    const helmetColor = isPlayer ? '#fafafa' : '#444';
-    const skinColor = '#caa07a';
+    const tilt = opts.tilt || 0; // -1..+1 lean for steering
 
     ctx.save();
     ctx.translate(sx, sy);
-    ctx.rotate(slope);
     ctx.scale(scale, scale);
+    ctx.rotate(tilt * 0.18); // small lean when steering
 
-    /* shadow */
-    ctx.fillStyle = 'rgba(0,0,0,0.34)';
+    /* Shadow underneath */
+    ctx.fillStyle = 'rgba(0,0,0,0.36)';
     ctx.beginPath();
-    ctx.ellipse(0, 1, 30, 4, 0, 0, Math.PI * 2);
+    ctx.ellipse(0, 4, 12, 5, 0, 0, Math.PI * 2);
     ctx.fill();
 
-    /* anatomy points */
-    const REAR        = { x: -22, y: -10 };
-    const FRONT       = { x:  22, y: -10 };
-    const BB          = { x:  -2, y: -10 };
-    const SADDLE      = { x:  -9, y: -34 };
-    const HEAD_TUBE   = { x:  17, y: -28 };
-    const HOOD        = { x:  22, y: -27 };
-    const HIP         = { x:  -7, y: -34 };
-    const SHOULDER    = { x:   5, y: -41 };
-    const ELBOW       = { x:  14, y: -36 };
-    const HAND        = { x:  21, y: -29 };
-    const HEAD        = { x:  13, y: -44 };
+    /* Rear wheel — viewed from above, narrow ellipse */
+    ctx.fillStyle = '#1a1a1a';
+    ctx.beginPath(); ctx.ellipse(0, 14, 4, 9, 0, 0, Math.PI * 2); ctx.fill();
+    /* Wheel highlight */
+    ctx.fillStyle = 'rgba(220,220,220,0.4)';
+    ctx.beginPath(); ctx.ellipse(0, 14, 1.4, 5, 0, 0, Math.PI * 2); ctx.fill();
 
-    /* wheels (drawn first, behind frame) */
-    drawWheelDetail(REAR.x,  REAR.y,  10, phase * 1.4, opts.spinning);
-    drawWheelDetail(FRONT.x, FRONT.y, 10, phase * 1.4, opts.spinning);
+    /* Front wheel */
+    ctx.fillStyle = '#1a1a1a';
+    ctx.beginPath(); ctx.ellipse(0, -16, 4, 9, 0, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = 'rgba(220,220,220,0.4)';
+    ctx.beginPath(); ctx.ellipse(0, -16, 1.4, 5, 0, 0, Math.PI * 2); ctx.fill();
 
-    /* frame tubes — filled rectangles for solid look */
-    drawTube(BB,        HEAD_TUBE, 2.4, frameColor);    // down tube
-    drawTube(SADDLE,    HEAD_TUBE, 2.0, frameColor);    // top tube
-    drawTube(SADDLE,    BB,        2.2, frameColor);    // seat tube
-    drawTube(BB,        REAR,      1.8, frameColor);    // chain stays
-    drawTube(SADDLE,    REAR,      1.6, frameColor);    // seat stays
-    drawTube(HEAD_TUBE, FRONT,     1.6, frameColor);    // fork
-
-    /* saddle */
-    ctx.fillStyle = '#222';
+    /* Frame — vertical line connecting wheels */
+    ctx.strokeStyle = isPlayer ? '#e4cb9d' : '#bbbbbb';
+    ctx.lineWidth = 2;
     ctx.beginPath();
-    ctx.ellipse(SADDLE.x, SADDLE.y - 0.5, 4.2, 1.3, 0, 0, Math.PI * 2);
-    ctx.fill();
-
-    /* drop bar tops + brake hood */
-    ctx.strokeStyle = '#222';
-    ctx.lineWidth = 1.5;
-    ctx.lineCap = 'round';
-    ctx.beginPath();
-    ctx.moveTo(HEAD_TUBE.x - 1, HEAD_TUBE.y);
-    ctx.lineTo(HEAD_TUBE.x + 4, HEAD_TUBE.y - 2);
-    ctx.lineTo(HOOD.x, HOOD.y);
+    ctx.moveTo(0, -10);
+    ctx.lineTo(0, 8);
     ctx.stroke();
-    /* brake hood */
-    ctx.fillStyle = '#222';
-    ctx.beginPath();
-    ctx.ellipse(HOOD.x + 0.2, HOOD.y - 0.5, 2, 2.6, 0.32, 0, Math.PI * 2);
-    ctx.fill();
 
-    /* chainring */
-    ctx.fillStyle = '#999';
-    ctx.beginPath(); ctx.arc(BB.x, BB.y, 4.5, 0, Math.PI * 2); ctx.fill();
-    ctx.strokeStyle = '#333';
-    ctx.lineWidth = 0.4;
-    ctx.beginPath(); ctx.arc(BB.x, BB.y, 4.5, 0, Math.PI * 2); ctx.stroke();
-    ctx.fillStyle = '#222';
-    ctx.beginPath(); ctx.arc(BB.x, BB.y, 1.4, 0, Math.PI * 2); ctx.fill();
+    /* Pedaling chainring — small dot at center */
+    ctx.fillStyle = '#888';
+    ctx.beginPath(); ctx.arc(0, 0, 2.4, 0, Math.PI * 2); ctx.fill();
 
-    /* crank arms + pedals */
-    const crankLen = 7;
-    const pedal1 = { x: BB.x + Math.cos(phase) * crankLen,         y: BB.y + Math.sin(phase) * crankLen };
-    const pedal2 = { x: BB.x + Math.cos(phase + Math.PI) * crankLen,y: BB.y + Math.sin(phase + Math.PI) * crankLen };
+    /* Cranks — animated rotation seen from above */
+    const crankR = 4;
+    const cax = Math.cos(phase) * crankR;
+    const cay = Math.sin(phase) * crankR;
     ctx.strokeStyle = '#444';
-    ctx.lineWidth = 1.6;
+    ctx.lineWidth = 1.4;
     ctx.beginPath();
-    ctx.moveTo(BB.x, BB.y); ctx.lineTo(pedal1.x, pedal1.y);
-    ctx.moveTo(BB.x, BB.y); ctx.lineTo(pedal2.x, pedal2.y);
+    ctx.moveTo(-cax, cay); ctx.lineTo(cax, -cay);
     ctx.stroke();
 
-    /* legs (back leg first so front leg overlaps it) */
-    drawLeg(HIP, pedal2, false);
-    drawLeg(HIP, pedal1, true);
-
-    /* torso — racing tuck silhouette */
+    /* Body silhouette — torso + jersey */
     ctx.fillStyle = colorJersey;
     ctx.beginPath();
-    ctx.moveTo(HIP.x - 2, HIP.y + 1);
-    ctx.lineTo(HIP.x - 2, HIP.y - 5);
-    ctx.lineTo(SHOULDER.x - 4, SHOULDER.y + 2);
-    ctx.lineTo(SHOULDER.x + 2, SHOULDER.y - 2);
-    ctx.lineTo(SHOULDER.x + 4, HIP.y - 4);
-    ctx.lineTo(HIP.x + 5, HIP.y - 1);
-    ctx.closePath();
+    ctx.ellipse(0, -2, 6.5, 10, 0, 0, Math.PI * 2);
     ctx.fill();
-
-    /* shading on back */
-    ctx.fillStyle = 'rgba(0,0,0,0.18)';
-    ctx.beginPath();
-    ctx.moveTo(HIP.x - 2, HIP.y + 1);
-    ctx.lineTo(HIP.x - 2, HIP.y - 5);
-    ctx.lineTo(SHOULDER.x - 4, SHOULDER.y + 2);
-    ctx.lineTo(SHOULDER.x - 5, SHOULDER.y + 4);
-    ctx.lineTo(HIP.x - 4, HIP.y);
-    ctx.closePath();
-    ctx.fill();
-
-    /* jersey accent stripe (sponsor band) */
+    /* Accent stripe across shoulders */
     ctx.fillStyle = colorAccent;
-    ctx.fillRect(HIP.x, HIP.y - 5, 7, 1.3);
+    ctx.fillRect(-6.5, -7, 13, 1.6);
+    /* Sponsor patch (small dot) */
+    ctx.fillStyle = colorAccent;
+    ctx.beginPath();
+    ctx.arc(0, 2, 1.4, 0, Math.PI * 2);
+    ctx.fill();
 
-    /* arm: shoulder → elbow → hand */
+    /* Arms reaching forward to bars */
     ctx.strokeStyle = colorJersey;
-    ctx.lineWidth = 3;
+    ctx.lineWidth = 2.4;
     ctx.lineCap = 'round';
     ctx.beginPath();
-    ctx.moveTo(SHOULDER.x, SHOULDER.y);
-    ctx.lineTo(ELBOW.x, ELBOW.y);
+    ctx.moveTo(-3.5, -8); ctx.lineTo(-2.5, -14);
+    ctx.moveTo( 3.5, -8); ctx.lineTo( 2.5, -14);
     ctx.stroke();
-    /* forearm (skin, narrower) */
-    ctx.strokeStyle = skinColor;
-    ctx.lineWidth = 2.4;
-    ctx.beginPath();
-    ctx.moveTo(ELBOW.x, ELBOW.y);
-    ctx.lineTo(HAND.x, HAND.y);
-    ctx.stroke();
-    /* glove */
-    ctx.fillStyle = '#222';
-    ctx.beginPath(); ctx.arc(HAND.x, HAND.y, 1.7, 0, Math.PI * 2); ctx.fill();
 
-    /* head — skin */
-    ctx.fillStyle = skinColor;
+    /* Bars (wide horizontal line near front wheel) */
+    ctx.strokeStyle = '#222';
+    ctx.lineWidth = 1.6;
     ctx.beginPath();
-    ctx.arc(HEAD.x, HEAD.y, 4, 0, Math.PI * 2);
-    ctx.fill();
-    /* jaw shadow */
-    ctx.fillStyle = 'rgba(0,0,0,0.18)';
-    ctx.beginPath();
-    ctx.arc(HEAD.x + 1.5, HEAD.y + 1.4, 3.1, 0, Math.PI * 2);
-    ctx.fill();
-    /* sunglasses */
-    ctx.fillStyle = '#1a1a1a';
-    ctx.beginPath();
-    ctx.ellipse(HEAD.x + 2.6, HEAD.y - 0.6, 2.6, 1.1, 0, 0, Math.PI * 2);
-    ctx.fill();
-
-    /* aero helmet — teardrop with tail */
-    ctx.fillStyle = helmetColor;
-    ctx.beginPath();
-    ctx.moveTo(HEAD.x - 5, HEAD.y - 2);
-    ctx.quadraticCurveTo(HEAD.x + 1, HEAD.y - 7.5, HEAD.x + 5.5, HEAD.y - 4);
-    ctx.lineTo(HEAD.x - 1, HEAD.y - 1);
-    ctx.lineTo(HEAD.x - 5, HEAD.y - 2);
-    ctx.closePath();
-    ctx.fill();
-    /* aero tail */
-    ctx.beginPath();
-    ctx.moveTo(HEAD.x - 5, HEAD.y - 2);
-    ctx.lineTo(HEAD.x - 9, HEAD.y - 1.2);
-    ctx.lineTo(HEAD.x - 4, HEAD.y);
-    ctx.closePath();
-    ctx.fill();
-    /* helmet stripe (brand accent) */
-    ctx.strokeStyle = colorJersey;
-    ctx.lineWidth = 1;
-    ctx.beginPath();
-    ctx.moveTo(HEAD.x - 5, HEAD.y - 4);
-    ctx.quadraticCurveTo(HEAD.x + 1, HEAD.y - 6.5, HEAD.x + 5, HEAD.y - 4);
+    ctx.moveTo(-7, -14); ctx.lineTo(7, -14);
     ctx.stroke();
-    /* vent slits */
-    ctx.strokeStyle = 'rgba(0,0,0,0.42)';
+
+    /* Helmet (top of head, aero teardrop pointing forward) */
+    ctx.fillStyle = isPlayer ? '#fafafa' : '#444';
+    ctx.beginPath();
+    ctx.ellipse(0, -10, 3.6, 5, 0, 0, Math.PI * 2);
+    ctx.fill();
+    /* Helmet stripe */
+    ctx.fillStyle = colorJersey;
+    ctx.fillRect(-2.6, -11, 5.2, 1);
+    /* Helmet vent slits (forward) */
+    ctx.strokeStyle = 'rgba(0,0,0,0.5)';
     ctx.lineWidth = 0.5;
-    for (let i = 0; i < 3; i++) {
+    for (let i = -1; i <= 1; i++) {
       ctx.beginPath();
-      ctx.moveTo(HEAD.x - 2 + i * 2, HEAD.y - 5.6);
-      ctx.lineTo(HEAD.x - 2 + i * 2, HEAD.y - 3.6);
+      ctx.moveTo(i * 1.4, -13);
+      ctx.lineTo(i * 1.4, -10.5);
       ctx.stroke();
     }
 
     ctx.restore();
   }
 
-  /* ---- Peloton (sticky, always ahead of player) ---- */
+  /* ---- PELOTON ---- */
   function drawPeloton(dt) {
+    /* Each peloton rider has a relativeAhead (forward distance from player)
+       and a laneX. They drift slowly; if player goes fast they catch up. */
     peloton.forEach(c => {
-      /* drift: if player slow → peloton pulls away; player fast → catches up */
       const target = state.speed * 1.05;
-      const drift = (1 - target) * 12 * dt;
-      c.relativeAhead = Math.max(60, Math.min(800, c.relativeAhead + drift));
+      const drift = (1 - target) * 14 * dt;
+      c.relativeAhead = Math.max(-40, Math.min(900, c.relativeAhead + drift));
       c.bobPhase += dt * (4 + state.speed * 6);
 
-      const wx = state.distance + c.relativeAhead;
-      const sx = worldToScreenX(wx);
-      if (sx < -60 || sx > viewW + 60) return;
-      const sy = terrainScreenY(wx);
-      const slope = terrainSlope(wx);
-      const pelotonScale = Math.max(1.1, Math.min(1.8, viewH / 420));
-      drawCyclistAt(sx, sy, {
-        scale: pelotonScale,
-        slope,
+      const wy = state.distance + c.relativeAhead;
+      const wx = laneToWorldX(c.laneX);
+      const sx = worldXToScreenX(wx);
+      const sy = worldYToScreenY(wy);
+      if (sy < -40 || sy > viewH + 40) return;
+      const baseScale = Math.max(1.6, Math.min(2.8, viewH / 320));
+      drawCyclistTopDown(sx, sy, {
+        scale: baseScale * 0.85,
         phase: c.bobPhase,
         color: c.color,
-        spinning: state.speed > 0.05
+        accent: '#fff'
       });
     });
   }
 
+  /* ---- PLAYER ---- */
   function drawPlayer() {
-    const sx = cyclistScreenX();
-    const sy = cyclistScreenY();   // explicit — camera locks player to this Y
-    const slope = terrainSlope(state.distance);
-    /* breath wobble */
-    const breath = Math.sin(state.elapsed * 2.4) * 0.5;
-    /* scale relative to viewport so cyclist reads well on phone + desktop */
-    const playerScale = Math.max(1.4, Math.min(2.2, viewH / 360));
-    drawCyclistAt(sx, sy + breath, {
-      scale: playerScale,
-      slope,
+    const sx = worldXToScreenX(state.laneX);
+    const sy = playerScreenY();
+    /* lean indicator from input */
+    const tilt = (window.rcInput && window.rcInput.laneInput()) || 0;
+    const baseScale = Math.max(1.8, Math.min(3.2, viewH / 280));
+    drawCyclistTopDown(sx, sy, {
+      scale: baseScale,
       phase: state.pedalPhase,
       color: '#e53747',
       accent: '#e4cb9d',
       isPlayer: true,
-      spinning: state.speed > 0.05
+      tilt
     });
-    /* anaerobic glow */
-    if (state.cadence > 110) {
+    /* Boost glow when sprinting */
+    if (state.boostMul > 1.05 || state.cadence > 110) {
       ctx.fillStyle = 'rgba(229, 55, 71, 0.18)';
       ctx.beginPath();
-      ctx.arc(sx, sy - 40, 50, 0, Math.PI * 2);
+      ctx.arc(sx, sy, 26 * baseScale * 0.5, 0, Math.PI * 2);
       ctx.fill();
     }
   }
 
-  /* ---- Maintain world (spawn + cleanup) ---- */
-  function maintainWorld() {
-    for (let i = props.length - 1; i >= 0; i--) {
-      if (props[i].worldX < state.distance - viewW * 0.5) props.splice(i, 1);
-    }
-    while (state.distance + viewW * 1.5 > nextSpawnAt) {
-      spawnProp(nextSpawnAt);
-      nextSpawnAt += rand(60, 130);
-    }
-    while (state.distance > nextSignWx - viewW) {
-      const realKm = Math.round(nextSignWx / 80 * (state.monument?.real?.long_km || 125) / 100);
-      props.push({ kind: 'sign', worldX: nextSignWx, label: `${realKm} km` });
-      nextSignWx += 8 * 80; // every "8% of trate" ≈ every ~10 km
+  /* ---- STATIONS — handled in pickups.js, given a screen position ---- */
+  function drawStations() {
+    if (!state.stations.length || !window.rcPickups) return;
+    /* Stations are at world Y = pct * 80, alternate sides of road */
+    const sorted = [...state.stations].sort((a, b) => a.worldY - b.worldY);
+    for (const st of sorted) {
+      const sx = worldXToScreenX(st.worldX);
+      const sy = worldYToScreenY(st.worldY);
+      if (sy < -50 || sy > viewH + 50) continue;
+      window.rcPickups.renderStation(ctx, st, sx, sy);
     }
   }
 
-  /* ---- Segment label trigger ---- */
+  /* ---- WORLD MAINTENANCE ---- */
+  function maintainWorld() {
+    /* Despawn behind player */
+    for (let i = props.length - 1; i >= 0; i--) {
+      if (props[i].worldY < state.distance - 200) props.splice(i, 1);
+    }
+    /* Spawn ahead */
+    while (state.distance + viewH * 1.5 > nextSpawnAt) {
+      spawnProp(nextSpawnAt);
+      nextSpawnAt += rand(40, 90);
+    }
+    /* Km milestones */
+    while (state.distance > nextSignWy - viewH) {
+      const realKm = Math.round(nextSignWy / 80 * (state.monument?.real?.long_km || 125) / 100);
+      props.push({
+        kind: 'kmsign',
+        worldY: nextSignWy,
+        worldX: -(roadHalfWidth() + 28), /* sit on left shoulder */
+        size: 1,
+        label: `${realKm} km`
+      });
+      nextSignWy += 8 * 80;
+    }
+  }
+
+  /* ---- SEGMENT TRIGGER ---- */
   function checkSegment() {
     if (!state.monument) return;
     const seg = window.rcMonument.segmentAtPct(state.monument, state.progressPct);
@@ -933,7 +597,6 @@
       showSegmentBanner(seg);
     }
   }
-
   function showSegmentBanner(seg) {
     const el = document.getElementById('segment-banner');
     if (!el) return;
@@ -947,7 +610,7 @@
     el._t = setTimeout(() => { el.classList.remove('show'); }, 2400);
   }
 
-  /* ---- Frame ---- */
+  /* ---- FRAME ---- */
   let lastT = performance.now();
   function frame(now) {
     const dt = Math.min(0.05, (now - lastT) / 1000);
@@ -956,37 +619,53 @@
     if (!state.waiting && !state.paused && !state.finished) {
       state.elapsed += dt;
       const pressing = window.rcInput && window.rcInput.isPressing();
+      const laneIn   = (window.rcInput && window.rcInput.laneInput()) || 0;
 
+      /* Lateral movement: laneIn is target lane fraction (-1..+1), smooth lerp */
+      const targetWX = laneToWorldX(Math.max(-1, Math.min(1, laneIn)));
+      state.laneX += (targetWX - state.laneX) * Math.min(1, dt * 6);
+
+      /* Boost expiry */
       if (state.boostUntil && state.elapsed > state.boostUntil) {
         state.boostMul = 1; state.boostUntil = 0;
       }
 
-      const seg = state.activeSegment;
-      const gradMul = seg ? Math.max(0.55, 1 - seg.gradient * 0.05) : 1;
-      const targetSpeed = (pressing ? 1 : 0) * gradMul * state.boostMul;
+      /* Auto baseline cadence + boost when pressing */
+      const grad = elevationGradientAt(state.distance);
+      const gradMul = Math.max(0.55, 1 - grad * 0.05);
+      const baseSpeed = 0.7;            // automatic pedaling
+      const boost = pressing ? 1.4 : 1;  // boost while held
+      const targetSpeed = baseSpeed * gradMul * state.boostMul * boost;
       state.speed += (targetSpeed - state.speed) * Math.min(1, dt * 3);
 
+      /* Forward distance + progress */
       state.distance += state.speed * 200 * dt;
       state.progressPct = Math.min(100, state.progressPct + state.speed * (100 / 180) * dt);
 
-      const targetCadence = pressing ? 92 : 0;
+      /* Cadence + pedal animation */
+      const targetCadence = pressing ? 110 : 90;
       state.cadence += (targetCadence - state.cadence) * Math.min(1, dt * 4);
-      state.pedalPhase += dt * (4 + state.speed * 8);
+      state.pedalPhase += dt * (5 + state.speed * 9);
 
-      const drain = pressing ? 1.0 : 0.15;
+      /* Energy drain — boost costs more */
+      const drain = pressing ? 1.4 : 0.5;
       state.energy = Math.max(0, state.energy - drain * dt);
+      /* If energy hits 0, force speed cap and visual */
+      if (state.energy <= 0) {
+        state.boostMul = 1;
+        /* don't kill speed entirely — just no boost */
+      }
 
       maintainWorld();
       checkSegment();
-
       if (state.stations.length) window.rcPickups.collectIfPassed(state, state.stations);
       if (window.rcTactics) window.rcTactics.tick(state, () => {});
 
-      /* live derived stats for HUD */
-      const SPEED_KMH_SCALE = 38;   // speed=1 ≈ 38 km/h, speed=1.5 ≈ ~57 km/h
+      /* HUD live */
+      const SPEED_KMH_SCALE = 38;
       const totalKm = state.monument?.real?.long_km || 125;
       const kmh = state.speed * SPEED_KMH_SCALE;
-      const km = state.progressPct * totalKm / 100;
+      const km  = state.progressPct * totalKm / 100;
 
       window.rcUI.setTimer(state.elapsed);
       window.rcUI.setProgressPct(state.progressPct);
@@ -996,53 +675,50 @@
       window.rcUI.setDistance(km, totalKm);
       window.rcUI.setScore(state.score);
 
-      /* Finish trigger */
-      if (state.progressPct >= 100 && !state.finished) {
-        if (window.rcFinish) window.rcFinish.open(state);
+      if (state.progressPct >= 100 && !state.finished && window.rcFinish) {
+        window.rcFinish.open(state);
       }
     }
 
-    drawSky();
-    drawFarHills();
-    drawMidHills();
-    drawTerrain();
+    /* Render order: background → road → props (left/right) → stations → peloton → player */
+    drawBackground();
+    drawRoad();
     drawProps();
     drawStations();
-    drawPeloton(state.waiting ? 0 : (1 / 60));
+    drawPeloton(state.waiting ? 0 : Math.min(0.05, dt));
     drawPlayer();
 
     requestAnimationFrame(frame);
   }
 
-  function drawStations() {
-    if (!state.stations.length || !window.rcPickups) return;
-    /* Draw far → near by worldX (so closer stations occlude). */
-    const sorted = [...state.stations].sort((a, b) => a.worldX - b.worldX);
-    for (const st of sorted) {
-      const sx = worldToScreenX(st.worldX);
-      if (sx < -120 || sx > viewW + 120) continue;
-      const sy = terrainScreenY(st.worldX);
-      window.rcPickups.renderStation(ctx, st, sx, sy);
-    }
-  }
-
-  /* ---- Boot ---- */
+  /* ---- BOOT + START HANDLER ---- */
   function attachStartHandler() {
     const overlay = document.getElementById('start-overlay');
     const hint = document.querySelector('.kbd-hint');
+    let started = false;
     function start() {
-      if (!state.waiting) return;
+      if (started || !state.waiting) return;
+      started = true;
       state.waiting = false;
       overlay && overlay.classList.add('hide');
       setTimeout(() => hint && hint.classList.add('fade'), 2400);
+      /* Request tilt permission on first user gesture (iOS) */
+      if (window.rcInput && window.rcInput.requestTiltPermission) {
+        window.rcInput.requestTiltPermission().then((granted) => {
+          if (granted && window.rcInput.recalibrateTilt) {
+            /* small delay to let first reading arrive, then capture neutral */
+            setTimeout(() => window.rcInput.recalibrateTilt(), 350);
+          }
+        });
+      }
       window.rcTrack && window.rcTrack('game_start', { monument: monumentId });
     }
     window.addEventListener('keydown', (e) => {
       if (e.code === 'Space' || e.code === 'Enter') start();
     });
     const tap = document.getElementById('tap-zone');
-    tap.addEventListener('touchstart', start, { passive: true });
-    tap.addEventListener('mousedown', start);
+    tap && tap.addEventListener('touchstart', start, { passive: true });
+    tap && tap.addEventListener('mousedown', start);
     overlay && overlay.addEventListener('click', start);
   }
 
@@ -1050,7 +726,6 @@
     resize();
     initialSpawn();
     initPeloton();
-    nextSpawnAt = 4500;
     requestAnimationFrame(frame);
     attachStartHandler();
 
@@ -1060,12 +735,19 @@
       window.rcUI.setMonumentName(m.name);
       const pts = window.rcMonument.buildElevationPath(m);
       window.rcMonument.renderProfileSvg(window.rcUI.els.profileSvg, pts);
-      if (window.rcPickups) state.stations = window.rcPickups.makeStations(m);
-      if (window.rcTactics)  window.rcTactics.setup(m);
-      if (window.rcFinish)   window.rcFinish.attach(state);
 
-      /* Initial HUD state — in case monument loaded after first frames */
+      /* Build stations: alternate sides of road */
+      if (window.rcPickups) {
+        state.stations = window.rcPickups.makeStations(m).map((st, i) => ({
+          ...st,
+          worldY: st.pct * 80,
+          worldX: ((i % 2 === 0) ? 1 : -1) * (roadHalfWidth() + 30)
+        }));
+      }
+      if (window.rcTactics) window.rcTactics.setup(m);
+      if (window.rcFinish)  window.rcFinish.attach(state);
       window.rcUI.setDistance(0, m.real?.long_km || 125);
+
       const overlay = document.getElementById('start-overlay');
       if (overlay) {
         const h = overlay.querySelector('h2');

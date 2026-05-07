@@ -509,9 +509,20 @@ body.game {
 }
 .start-overlay p {
   margin: 0;
-  max-width: 320px;
-  color: rgba(255,255,255,.78);
+  max-width: 360px;
+  color: rgba(255,255,255,.82);
   font-size: .95rem;
+  line-height: 1.45;
+}
+.start-overlay kbd {
+  font-family: var(--font-body);
+  background: rgba(255,255,255,.14);
+  border: 1px solid rgba(255,255,255,.25);
+  padding: 2px 8px;
+  border-radius: 6px;
+  margin: 0 2px;
+  font-size: .85em;
+  color: var(--rc-cream);
 }
 .start-overlay .pulse {
   width: 84px;
