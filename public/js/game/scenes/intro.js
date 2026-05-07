@@ -17,7 +17,7 @@
         <div class="intro-stats">
           <div><strong>124</strong><span>km</span></div>
           <div><strong>968</strong><span>m ↑</span></div>
-          <div><strong>~3</strong><span>min hra</span></div>
+          <div><strong>~2</strong><span>min hra</span></div>
         </div>
         <button type="button" class="btn btn-primary big" id="intro-start">Začni svoj deň</button>
         <a class="back" href="/">← späť na monumenty</a>

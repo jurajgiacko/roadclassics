@@ -135,8 +135,12 @@
     nextSpawnAt = 4500;
   }
 
-  /* ---- Peloton (other riders in same race, in different lanes ahead) ---- */
+  /* ---- Peloton (other riders in same race, in different lanes ahead) ----
+     Riders drift forward/back relative to the player based on speed delta.
+     If a rider falls too far behind they respawn ahead (so the field stays
+     populated), if a rider passes very far ahead they slow down a bit. */
   const peloton = [];
+  let overtakeCount = 0;
   function initPeloton() {
     const colors = ['#a52447', '#7c1a32', '#c44470', '#5a1530', '#e4cb9d'];
     for (let i = 0; i < 5; i++) {
@@ -144,6 +148,7 @@
         relativeAhead: 60 + i * 40 + rand(-15, 15),
         laneX:         rand(-0.7, 0.7),
         color:         colors[i % colors.length],
+        passed:        false,    // for overtake-once accounting
         bobPhase:      rand(0, Math.PI * 2)
       });
     }
@@ -540,14 +545,48 @@
     ctx.restore();
   }
 
-  /* ---- PELOTON (sprite-based) ---- */
+  /* ---- PELOTON (sprite-based, with overtake feedback) ---- */
   const PELOTON_SPRITES = ['peloton-rider-1', 'peloton-rider-2', 'peloton-rider-3', 'peloton-rider-4'];
+
+  function showOvertakeToast() {
+    /* Brief floating "+20 OVERTAKE" toast — same CSS chassis as pickup-toast */
+    const el = document.createElement('div');
+    el.className = 'pickup-toast overtake-toast';
+    el.innerHTML = `+20<small>Overtake</small>`;
+    document.body.appendChild(el);
+    setTimeout(() => el.remove(), 1700);
+  }
+
   function drawPeloton(dt) {
     peloton.forEach((c, i) => {
+      /* Drift: peloton AI rides at "ideal" target speed ~1.05; if player
+         exceeds that, peloton catches the player (their relativeAhead
+         shrinks); if player slacks, they pull away. */
       const target = state.speed * 1.05;
       const drift = (1 - target) * 14 * dt;
-      c.relativeAhead = Math.max(-40, Math.min(900, c.relativeAhead + drift));
+      c.relativeAhead += drift;
       c.bobPhase += dt * (4 + state.speed * 6);
+
+      /* Detect overtake — relativeAhead crosses from positive to negative
+         while player is moving forward (i.e., player passed this rider). */
+      if (!c.passed && c.relativeAhead < 0 && state.speed > 0.4) {
+        c.passed = true;
+        overtakeCount += 1;
+        state.score = (state.score || 0) + 20;
+        if (window.rcUI && window.rcUI.setScore) window.rcUI.setScore(state.score);
+        showOvertakeToast();
+        window.rcTrack && window.rcTrack('overtake', { rider: i, count: overtakeCount });
+      }
+
+      /* Respawn far-behind riders ahead of player so the field stays
+         populated. Reset passed flag so they can be overtaken again. */
+      if (c.relativeAhead < -240) {
+        c.relativeAhead = 380 + Math.random() * 280;
+        c.laneX = -0.7 + Math.random() * 1.4;
+        c.passed = false;
+      }
+      /* Cap how far ahead a rider can pull away — keeps them on screen */
+      if (c.relativeAhead > 900) c.relativeAhead = 900;
 
       const wy = state.distance + c.relativeAhead;
       const wx = laneToWorldX(c.laneX);

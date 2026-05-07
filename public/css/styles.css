@@ -1487,6 +1487,11 @@ body.game {
   80%  { opacity: 1; transform: translate(-50%, -36px); }
   100% { opacity: 0; transform: translate(-50%, -64px); }
 }
+.pickup-toast.overtake-toast {
+  background: var(--ok);
+  box-shadow: 0 10px 30px rgba(25, 135, 84, 0.45);
+  bottom: calc(220px + env(safe-area-inset-bottom));
+}
 
 /* ==========================================================================
    Tactics modal — full-screen pause with 3 choices + countdown
