@@ -8,7 +8,8 @@
     });
   });
 
-  document.querySelectorAll('.card[data-monument]').forEach((card) => {
+  /* Cover both legacy `.card` and new `.monument-card` markups. */
+  document.querySelectorAll('.card[data-monument], .monument-card[data-monument]').forEach((card) => {
     const monument = card.dataset.monument;
     const isActive = card.classList.contains('is-active');
     card.addEventListener('click', (e) => {

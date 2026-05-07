@@ -366,6 +366,19 @@
       "category": "finish",
       "aspect": "16:9",
       "prompt": "End-of-day scene — a single cyclist sitting on a stone bench at the Reistna kolonáda overlook at midnight, a glass of wine in hand, looking out over the dark Moravian vineyards under a starry sky with the Milky Way faintly visible. The colonnade columns rising softly behind. Quiet, contemplative"
+    },
+
+    {
+      "id": "monument-vysocina",
+      "category": "landscapes",
+      "aspect": "4:3",
+      "prompt": "Aerial 3/4 view of the Žďárské vrchy highlands — densely forested rolling hills, a winding cycling road threading between the spruce trees, distant rocky outcrop of Devět skal on the horizon, summer dusk light. Empty road, no cyclists in this frame"
+    },
+    {
+      "id": "monument-jested",
+      "category": "landscapes",
+      "aspect": "4:3",
+      "prompt": "Iconic silhouette of the Ještěd peak with its distinctive hyperboloid transmitter tower against a dramatic burgundy evening sky, Jizerské hory ridges receding behind, a thin cycling road switchbacking up the mountainside on the left. Empty road, no cyclists in this frame"
     }
   ]
 }

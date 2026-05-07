@@ -72,7 +72,223 @@ button { font-family: inherit; cursor: pointer; }
 .shell { max-width: var(--maxw); margin: 0 auto; padding: 0 20px; }
 
 /* ==========================================================================
-   Top bar
+   HOME (entry page) — wine-monochrome illustrated style
+   ========================================================================== */
+body.home {
+  background: #170410;
+  color: var(--rc-cream);
+  min-height: 100dvh;
+}
+body.home .shell { max-width: 1180px; margin: 0 auto; padding: 0 20px; }
+
+.home-topbar {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 18px;
+  padding: 22px 20px 6px;
+}
+.home-topbar .brands {
+  display: flex; align-items: center; gap: 14px;
+}
+.home-topbar .brands img { height: 26px; opacity: .9; }
+.home-topbar .brands .x {
+  color: var(--rc-cream-soft);
+  font-size: .8rem;
+  letter-spacing: .25em;
+}
+
+.home-hero {
+  position: relative;
+  padding: 60px 20px 80px;
+  overflow: hidden;
+  isolation: isolate;
+}
+.home-hero-art {
+  position: absolute;
+  inset: 0;
+  background-image: url('/assets/scenes/landscapes/palava-overview-map.png');
+  background-size: cover;
+  background-position: center;
+  opacity: 0.32;
+  filter: saturate(1.05) brightness(0.85);
+  z-index: -1;
+}
+.home-hero::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background: radial-gradient(80% 100% at 50% 65%, transparent, rgba(8,2,8,0.85));
+}
+.home-hero-shell {
+  max-width: 720px;
+  margin: 0 auto;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  align-items: center;
+}
+.home-hero .kicker {
+  font-size: .8rem;
+  letter-spacing: .26em;
+  text-transform: uppercase;
+  color: var(--rc-cream-soft);
+}
+.home-hero h1 {
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: clamp(2.2rem, 6vw, 3.8rem);
+  color: var(--rc-cream);
+  margin: 0;
+  letter-spacing: -0.02em;
+  line-height: 1.05;
+  text-shadow: 0 6px 30px rgba(0,0,0,.55);
+}
+.home-hero p {
+  margin: 4px auto 16px;
+  max-width: 540px;
+  font-size: 1.05rem;
+  line-height: 1.55;
+  color: rgba(255,255,255,.85);
+}
+.home-hero-cta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  justify-content: center;
+}
+
+.home-monuments {
+  padding: 30px 20px 80px;
+  position: relative;
+}
+.home-monuments .shell { padding: 0 0; }
+
+.monument-grid-illustrated {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 18px;
+  padding: 0 20px;
+}
+@media (min-width: 720px) {
+  .monument-grid-illustrated { grid-template-columns: 1fr 1fr 1fr; gap: 22px; padding: 0; }
+}
+
+.monument-card {
+  position: relative;
+  border-radius: 18px;
+  overflow: hidden;
+  aspect-ratio: 4 / 5;
+  background: #2c0814;
+  border: 1px solid rgba(228,203,157,.18);
+  isolation: isolate;
+  transition: transform .25s ease, box-shadow .25s ease, border-color .25s ease;
+}
+.monument-card.is-active:hover {
+  transform: translateY(-6px);
+  box-shadow: 0 22px 48px rgba(229, 55, 71, 0.28);
+  border-color: rgba(228,203,157,.5);
+}
+.monument-card .mc-art {
+  position: absolute;
+  inset: 0;
+  background-size: cover;
+  background-position: center;
+  z-index: 0;
+  transition: transform .8s ease;
+}
+.monument-card.is-active:hover .mc-art { transform: scale(1.04); }
+.monument-card .mc-overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  background: linear-gradient(180deg, rgba(8,2,8,0.15) 35%, rgba(8,2,8,0.92));
+}
+.monument-card .mc-body {
+  position: absolute;
+  inset: auto 0 0 0;
+  z-index: 2;
+  padding: 22px 22px 22px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.monument-card .mc-date {
+  font-size: .72rem;
+  letter-spacing: .22em;
+  text-transform: uppercase;
+  color: var(--rc-cream-soft);
+}
+.monument-card h2 {
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: clamp(1.6rem, 3.4vw, 2.4rem);
+  color: var(--rc-cream);
+  margin: 0;
+  line-height: 1;
+  letter-spacing: -0.01em;
+}
+.monument-card .mc-stats {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px 16px;
+  font-size: .85rem;
+  color: rgba(255,255,255,.7);
+}
+.monument-card .mc-stats strong {
+  color: var(--rc-cream);
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 1.05rem;
+  margin-right: 2px;
+}
+.monument-card .btn {
+  align-self: flex-start;
+  margin-top: 4px;
+}
+
+.monument-card.is-soon {
+  filter: saturate(0.85);
+  opacity: 0.94;
+}
+.monument-card.is-soon .mc-art { filter: brightness(0.7); }
+.monument-card .mc-soon {
+  align-self: flex-start;
+  display: inline-block;
+  margin-top: 4px;
+  padding: 6px 12px;
+  border: 1px solid rgba(228,203,157,.45);
+  border-radius: 999px;
+  font-size: .72rem;
+  letter-spacing: .2em;
+  text-transform: uppercase;
+  color: var(--rc-cream);
+  background: rgba(8,2,8,0.4);
+  backdrop-filter: blur(4px);
+}
+
+.home-footer {
+  background: rgba(0,0,0,0.45);
+  color: var(--rc-cream-soft);
+  padding: 22px 20px calc(22px + env(safe-area-inset-bottom));
+  font-size: .85rem;
+  border-top: 1px solid rgba(228,203,157,.1);
+}
+.home-footer .shell {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 14px;
+  justify-content: space-between;
+  align-items: center;
+}
+.home-footer a { color: var(--rc-cream); }
+
+/* ==========================================================================
+   Top bar (legacy — used inside game.html and leaderboard.html)
    ========================================================================== */
 .topbar {
   display: flex;
