@@ -1,0 +1,242 @@
+{
+  "_": "Manifest for Gemini Nano Banana asset generation. Each entry produces one PNG saved to public/assets/scenes/<category>/<id>.png. The styleAnchor is appended to every prompt for consistency.",
+  "styleAnchor": "Flat vector illustration in the style of Martin Paseka and the @road__classics Instagram artwork: monochromatic deep-burgundy and wine-red palette (#450521 primary, #2c0814 darks, #5a1530 mids, #c44470 highlights), warm cream accents (#e4cb9d, #f0d4a0) for skin and props, charming cozy character vignettes, rounded soft shapes, 3/4 isometric perspective, no text, no logos, subtle dotted grid background texture, dark almost-black setting, dreamlike Moravian wine country mood at dusk. Cinematic composition, balanced negative space.",
+  "negativePrompt": "no photorealism, no 3D rendering, no harsh shadows, no realistic skin tones, no green grass (use dark wine ground), no blue sky (use burgundy night sky), no text, no watermark, no logos.",
+  "defaultModel": "gemini-2.5-flash-image",
+  "assets": [
+    {
+      "id": "valtice-morning",
+      "category": "landscapes",
+      "aspect": "16:9",
+      "prompt": "Aerial 3/4 view of Valtice town square (náměstí Svobody) at early morning, baroque chateau silhouette with vineyards stretching away in regular rows, single warm street lamp glowing, two cyclists in racing kits walking with bikes, cobblestone surface, atmospheric mist rolling between rows of grapevines"
+    },
+    {
+      "id": "lednice-vineyards",
+      "category": "landscapes",
+      "aspect": "16:9",
+      "prompt": "Top-down 3/4 view of vineyard rows running diagonally across the frame with wooden T-stakes topped in cream, a winding cycling road weaving between fields, cypress trees lining the road, distant Lednice château silhouette on horizon"
+    },
+    {
+      "id": "mikulov-overlook",
+      "category": "landscapes",
+      "aspect": "16:9",
+      "prompt": "Mikulov town from above with castle, baroque church and tile-roofed houses cascading down a hillside surrounded by vineyards, cycling road descending into the village, late afternoon light"
+    },
+    {
+      "id": "devin-climb",
+      "category": "landscapes",
+      "aspect": "9:16",
+      "prompt": "Steep cycling climb up Děvín hill in Pálava limestone ridge, narrow road winding up between dramatic white limestone cliffs, lonely solo cyclist in red jersey leaning into the climb, vineyards far below"
+    },
+    {
+      "id": "novomlynske-reservoirs",
+      "category": "landscapes",
+      "aspect": "16:9",
+      "prompt": "Long flat causeway road across Novomlýnské reservoirs, water reflecting sky on both sides, peloton of 5 cyclists riding in a tight line with reflections, gentle wind on the water"
+    },
+    {
+      "id": "tesarova-past-pass",
+      "category": "landscapes",
+      "aspect": "9:16",
+      "prompt": "Technical climb through Tesarova past pass, rocky outcrops, dense forest, cycling road snaking up between trees, cyclist visible mid-climb"
+    },
+    {
+      "id": "reistna-kolonada",
+      "category": "landscapes",
+      "aspect": "16:9",
+      "prompt": "The Reistna colonnade monument atop the final climb at sunset, classical white columns silhouetted against burgundy sky, finish-line tape stretched between trees, cyclist arms-raised in victory just below the columns, vineyards visible far below"
+    },
+    {
+      "id": "palava-overview-map",
+      "category": "landscapes",
+      "aspect": "1:1",
+      "prompt": "Decorative top-down illustrated map of the Pálava region, rolling vineyard hills, Valtice and Mikulov labeled locations as little buildings, Děvín as a stylized peak, Reistna colonnade icon, dotted route path tracing the cycling course, compass rose, Moravian folk-art ornamental border"
+    },
+
+    {
+      "id": "kitchen-breakfast",
+      "category": "prerace",
+      "aspect": "4:3",
+      "prompt": "Cozy Moravian morning kitchen seen 3/4 from above, wooden table with three breakfast options laid out: scrambled eggs with bread, oatmeal porridge with fruit, and a buttery croissant with espresso. A cycling jersey draped over a chair, sun streaming through curtains, ceramic Moravian-pattern plates. Inviting and warm."
+    },
+    {
+      "id": "garage-bike-check",
+      "category": "prerace",
+      "aspect": "4:3",
+      "prompt": "Home garage workshop seen 3/4, road bicycle on a maintenance stand, tire pump, chain lube, tools on a workbench, helmet hanging, soft morning light coming through the open garage door, dog mascot watching from the corner"
+    },
+    {
+      "id": "jersey-packing",
+      "category": "prerace",
+      "aspect": "1:1",
+      "prompt": "Top-down view of a flat-laid red cycling jersey with three back pockets clearly visible, beside it laid out: an Enervit Carbo Gel C2:1PRO sachet, an Enervit Carbo Bar C2:1PRO, an Enervit Isocarb C2:1PRO drink mix sachet, energy chews. Player must drag items into pockets. Clean composition, soft drop shadows."
+    },
+    {
+      "id": "drive-to-start",
+      "category": "prerace",
+      "aspect": "16:9",
+      "prompt": "Top-down map of southern Moravia at dawn with a winding country road from a starting point heading to Valtice, a small car icon with bicycles on the roof rack moving along the route, vineyard patches visible, illustrated mile markers"
+    },
+    {
+      "id": "start-line-briefing",
+      "category": "prerace",
+      "aspect": "16:9",
+      "prompt": "Pre-race briefing scene at Valtice town square, hundreds of cyclists in colorful jerseys gathered behind a start banner reading nothing (no text), Road Classics flags fluttering, a dog mascot weaving among cyclists, baroque church in background, sunrise breaking"
+    },
+
+    {
+      "id": "cyclist-player-front",
+      "category": "characters",
+      "aspect": "1:1",
+      "prompt": "Side view sprite of a focused road cyclist in a red Enervit jersey leaning into the bars in racing tuck position, aero helmet, sunglasses, white cycling shoes, transparent background, character design, no text"
+    },
+    {
+      "id": "cyclist-player-topdown",
+      "category": "characters",
+      "aspect": "1:1",
+      "prompt": "Top-down view sprite of a road cyclist seen from above, red jersey, aero helmet visible, two wheels foreshortened, hands on drop bars, transparent background, character design"
+    },
+    {
+      "id": "peloton-rider-1",
+      "category": "characters",
+      "aspect": "1:1",
+      "prompt": "Top-down sprite of a road cyclist in a deep burgundy jersey with cream stripe, aero helmet, transparent background, character design"
+    },
+    {
+      "id": "peloton-rider-2",
+      "category": "characters",
+      "aspect": "1:1",
+      "prompt": "Top-down sprite of a road cyclist in a wine-red jersey with white shoulder bands, transparent background"
+    },
+    {
+      "id": "peloton-rider-3",
+      "category": "characters",
+      "aspect": "1:1",
+      "prompt": "Top-down sprite of a road cyclist in a dusty pink jersey with cream piping, transparent background"
+    },
+    {
+      "id": "peloton-rider-4",
+      "category": "characters",
+      "aspect": "1:1",
+      "prompt": "Top-down sprite of a road cyclist in a cream jersey with burgundy panels, transparent background"
+    },
+    {
+      "id": "winemaker",
+      "category": "characters",
+      "aspect": "3:4",
+      "prompt": "A cheerful Moravian winemaker character holding two glasses of red wine, wearing a fedora and a red shirt, stylized illustrated character, transparent background"
+    },
+    {
+      "id": "mechanic",
+      "category": "characters",
+      "aspect": "3:4",
+      "prompt": "A bike mechanic character standing in front of a small repair tent, holding a wrench, work apron, transparent background"
+    },
+    {
+      "id": "dog-mascot",
+      "category": "characters",
+      "aspect": "1:1",
+      "prompt": "Cute pale beige labrador retriever sitting and panting cheerfully, the Road Classics mascot, friendly expression, transparent background"
+    },
+
+    {
+      "id": "station-gel",
+      "category": "stations",
+      "aspect": "1:1",
+      "prompt": "3/4 view illustration of a Road Classics feed station tent in vivid Enervit red, a small folding table with rows of orange Enervit Carbo Gel C2:1PRO sachets, two volunteers in red shirts handing them out, transparent background"
+    },
+    {
+      "id": "station-bar",
+      "category": "stations",
+      "aspect": "1:1",
+      "prompt": "3/4 view feed station tent in Enervit red with a table of stacked green Enervit Carbo Bar C2:1PRO bars, volunteer extending a bar toward camera, transparent background"
+    },
+    {
+      "id": "station-drink",
+      "category": "stations",
+      "aspect": "1:1",
+      "prompt": "3/4 view feed station tent in Enervit red with rows of blue Enervit Isocarb C2:1PRO drink bottles, volunteer holding a bottle up, water cooler in background, transparent background"
+    },
+
+    {
+      "id": "event-flat-tire",
+      "category": "events",
+      "aspect": "4:3",
+      "prompt": "A cyclist crouched on the roadside with a flat front tire, holding a CO2 cartridge, spare inner tube on the ground, frustrated expression, vineyards behind"
+    },
+    {
+      "id": "event-gel-grab",
+      "category": "events",
+      "aspect": "4:3",
+      "prompt": "Action shot of a cyclist mid-ride reaching out with their right hand to grab an Enervit gel from a feed-station volunteer, both blurring slightly with motion, illustrated style"
+    },
+    {
+      "id": "event-attack",
+      "category": "events",
+      "aspect": "4:3",
+      "prompt": "A peloton breaking apart on a steep climb, one cyclist in red jersey out of the saddle attacking off the front, others straining behind, dramatic perspective"
+    },
+    {
+      "id": "event-fan-cheer",
+      "category": "events",
+      "aspect": "4:3",
+      "prompt": "Local fans cheering on a roadside, an old man in a fedora raising a glass of wine, a child waving a Road Classics flag, dog mascot with bandana, vineyards behind"
+    },
+
+    {
+      "id": "finish-line",
+      "category": "finish",
+      "aspect": "16:9",
+      "prompt": "Cyclist crossing a finish-line tape at the Reistna colonnade at sunset, arms raised, peloton coming up behind, cream finish-line ribbon stretched across, columns of the colonnade framing the shot"
+    },
+    {
+      "id": "finish-celebration",
+      "category": "finish",
+      "aspect": "16:9",
+      "prompt": "Post-race celebration at Reistna kolonáda with a group of cyclists clinking glasses of red Moravian wine, sommelier pouring, dog mascot with garland of vines, sun setting behind colonnade columns"
+    },
+
+    {
+      "id": "map-pin-station",
+      "category": "map",
+      "aspect": "1:1",
+      "prompt": "A simple flat illustrated map pin in Enervit red with a small white tent symbol inside, no text, transparent background"
+    },
+    {
+      "id": "map-pin-tactic",
+      "category": "map",
+      "aspect": "1:1",
+      "prompt": "A flat illustrated decision-point map marker, cream circle with a wine-red question mark, transparent background"
+    },
+    {
+      "id": "map-rc-badge",
+      "category": "map",
+      "aspect": "1:1",
+      "prompt": "Decorative Road Classics R-monogram badge in deep wine red on cream background, ornamental round border, no text other than the R, transparent background"
+    },
+    {
+      "id": "achievement-attacker",
+      "category": "map",
+      "aspect": "1:1",
+      "prompt": "Achievement badge in cream and wine: a stylized lightning bolt over a cyclist silhouette, ornamental ribbon, no text, transparent background"
+    },
+    {
+      "id": "achievement-tempar",
+      "category": "map",
+      "aspect": "1:1",
+      "prompt": "Achievement badge in cream and wine: a stopwatch over a steady-pace cyclist silhouette, ornamental ribbon, no text, transparent background"
+    },
+    {
+      "id": "achievement-fueler",
+      "category": "map",
+      "aspect": "1:1",
+      "prompt": "Achievement badge in cream and wine: an Enervit gel sachet icon centered, ornamental ribbon, no text, transparent background"
+    },
+    {
+      "id": "achievement-taktik",
+      "category": "map",
+      "aspect": "1:1",
+      "prompt": "Achievement badge in cream and wine: a chess knight piece with a cyclist motif, ornamental ribbon, no text, transparent background"
+    }
+  ]
+}

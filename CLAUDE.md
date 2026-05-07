@@ -263,16 +263,49 @@ Hookuj cez `js/analytics.js`:
 - Žiadne 3rd-party trackery okrem GA4
 - Privacy notice link v päte na Enervit privacy page
 
-## 12. Roadmap
+## 12. Roadmap (revízia 2 — story-driven illustrated)
 
-| Fáza | Obsah | Status |
+Po prvotnej iterácii sme procedural canvas pivot opustili — nedosahuje
+kvalitu @road__classics × @themartinpaseka illustration referencie.
+Nový plán je sprite-based asset pipeline cez **Gemini Nano Banana**
+(2.5 Flash Image) generated illustrations + multi-stage story flow
+inšpirovaný [dogtravel.cz](https://www.dogtravel.cz/).
+
+| Sess. | Obsah | Status |
 |---|---|---|
-| 1 — MVP | Vstupná, Pálava trať, finiš, share, GA4 | **rozpracovaná** |
-| 2 — Leaderboard | Vercel KV, anonym ID, top 10 | TBD |
-| 3 — Multi-monument | Vysočina + Ještěd profily | TBD |
-| 4 — Polish & launch | Asset polish, lighthouse, deploy, QR test | TBD |
+| 1 | Asset generation pipeline (Nano Banana script + manifest + style guide) → ~40 illustrations | aktívne |
+| 2 | Scene state machine + sprite renderer + GPX-driven segments | pending |
+| 3 | Pre-race story stages: ráno/kuchyňa, garáž/bike, jersey packing, drive, štart | pending |
+| 4 | Race scene v plnej kráse: real GPX trasa, illustrated peloton, mid-race events | pending |
+| 5 | Finiš pri Reistnej kolonáde, audio, animácie, polish, lighthouse, launch | pending |
+
+## 13. Asset pipeline
+
+- **Image gen:** Gemini 2.5 Flash Image API (Nano Banana)
+- **Style anchor:** `assets/illustrations/style-reference.png` (uložený screenshot z @road__classics × @themartinpaseka IG story)
+- **Manifest:** `tools/assets-manifest.json` — každá ilustrácia má `id`, `prompt`, `aspect`, `category`
+- **Generator script:** `tools/generate-assets.mjs` — Node, čítaj manifest, volaj API, ulož `public/assets/scenes/<id>.png`
+- **API key:** v `.env.local` (gitignored) ako `GEMINI_API_KEY`
+
+### Categories (~40 assets)
+- **landscapes/** — 8× scenérie (Valtice ráno, vinice, Lednice château, Mikulov, Děvín, Novomlýnské nádrže, Tesarova past, Reistna kolonáda)
+- **prerace/** — 5× kuchyňa, garáž, bike, jersey s vreckami, štart line briefing
+- **characters/** — 8× cyklista (front/back/3-quarter), peloton 4×, vinař, mechanik, sommelier, dog mascot
+- **stations/** — 3× Enervit stánok pri scenérii (gel/bar/drink variant)
+- **events/** — 4× defekt pneu, gel grab, attack moment, klobúk fanúšika
+- **finish/** — 2× cieľová pása, peloton group photo
+- **map/** — 4× location pin, R-monogram badge, km marker, achievement icon
+
+## 14. GPS & route data
+
+- **Pálava long GPX:** [roadclassics.cz/stahovani/15-gpx-palava-2026-dlouha](https://www.roadclassics.cz/stahovani/15-gpx-palava-2026-dlouha)
+- **Pálava short GPX:** [roadclassics.cz/stahovani/16-gpx-palava-2026-kratka](https://www.roadclassics.cz/stahovani/16-gpx-palava-2026-kratka)
+- Parser: `tools/gpx-to-segments.mjs` → vyextrahuje turn-by-turn + elevation profile
+- Output: `public/monuments/palava-real.json` — segmenty s reálnou geometriou
+- Použité v race scéne pre zakrivenie cesty a presné landmark prepojenie
 
 ---
 
-**Posledná aktualizácia:** 2026-05-05
+**Posledná aktualizácia:** 2026-05-07 (revízia 2)
 **Repozitár:** https://github.com/jurajgiacko/roadclassics
+**Live:** https://roadclassics.vercel.app
