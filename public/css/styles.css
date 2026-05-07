@@ -962,6 +962,69 @@ body.game {
   margin: 6px 0;
 }
 
+/* Landmark chapter card — fired when crossing into a new race zone */
+.landmark-card {
+  position: fixed;
+  inset: 0;
+  z-index: 15;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity .35s ease;
+  background: linear-gradient(180deg, rgba(8,2,8,0.55), rgba(40,5,22,0.78));
+  backdrop-filter: blur(4px);
+}
+.landmark-card.show { opacity: 1; }
+.landmark-card .lm-art {
+  position: absolute;
+  inset: 0;
+  background-size: cover;
+  background-position: center;
+  opacity: 0.82;
+  transform: scale(1.06);
+  transition: transform 1.6s ease, opacity 0.4s ease;
+}
+.landmark-card.show .lm-art { transform: scale(1.0); }
+.landmark-card::after {
+  content: "";
+  position: absolute; inset: 0;
+  background: radial-gradient(60% 70% at 50% 60%, transparent, rgba(8,2,8,0.7));
+}
+.landmark-card .lm-text {
+  position: relative;
+  z-index: 1;
+  text-align: center;
+  max-width: 560px;
+  padding: 0 24px;
+  transform: translateY(8px);
+  opacity: 0;
+  transition: transform .5s ease .15s, opacity .5s ease .15s;
+}
+.landmark-card.show .lm-text { transform: translateY(0); opacity: 1; }
+.landmark-card .lm-kicker {
+  font-size: .8rem;
+  letter-spacing: .26em;
+  text-transform: uppercase;
+  color: var(--rc-cream-soft);
+  margin-bottom: 10px;
+}
+.landmark-card .lm-title {
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: clamp(2rem, 7vw, 3.4rem);
+  color: var(--rc-cream);
+  margin: 0 0 6px;
+  line-height: 1.05;
+  text-shadow: 0 8px 36px rgba(0,0,0,.6);
+}
+.landmark-card .lm-sub {
+  margin: 0;
+  font-size: 1rem;
+  color: rgba(255,255,255,.86);
+}
+
 /* Race countdown */
 .race-countdown {
   position: fixed;

@@ -395,7 +395,42 @@
     }
   }
 
-  /* ---- CYCLIST SPRITE (top-down) ---- */
+  /* ---- CYCLIST SPRITE — illustrated PNG via rcSprites with procedural fallback ---- */
+  function drawCyclistSprite(sx, sy, opts = {}) {
+    const sprId = opts.spriteId || 'cyclist-player-topdown';
+    const tilt  = opts.tilt || 0;
+    const baseHeight = opts.height || 84;
+    if (!window.rcSprites || !window.rcSprites.get) {
+      drawCyclistTopDown(sx, sy, opts);
+      return;
+    }
+    const img = window.rcSprites.get(sprId);
+    if (!img || !img.width || img.width < 4) {
+      /* sprite not yet loaded — fall back to procedural */
+      drawCyclistTopDown(sx, sy, opts);
+      return;
+    }
+    ctx.save();
+    ctx.translate(sx, sy);
+    if (tilt) ctx.rotate(tilt * 0.18);
+    /* shadow */
+    ctx.fillStyle = 'rgba(0,0,0,0.45)';
+    ctx.beginPath();
+    ctx.ellipse(0, baseHeight * 0.42, baseHeight * 0.32, baseHeight * 0.08, 0, 0, Math.PI * 2);
+    ctx.fill();
+    const w = baseHeight * (img.width / img.height);
+    ctx.drawImage(img, -w / 2, -baseHeight / 2, w, baseHeight);
+    /* boost halo if anaerobic */
+    if (opts.anaerobic) {
+      ctx.fillStyle = 'rgba(229, 55, 71, 0.18)';
+      ctx.beginPath();
+      ctx.arc(0, 0, baseHeight * 0.55, 0, Math.PI * 2);
+      ctx.fill();
+    }
+    ctx.restore();
+  }
+
+  /* ---- CYCLIST SPRITE (procedural fallback for when assets aren't loaded) ---- */
   function drawCyclistTopDown(sx, sy, opts = {}) {
     const scale = opts.scale || 1;
     const phase = opts.phase || 0;
@@ -501,11 +536,10 @@
     ctx.restore();
   }
 
-  /* ---- PELOTON ---- */
+  /* ---- PELOTON (sprite-based) ---- */
+  const PELOTON_SPRITES = ['peloton-rider-1', 'peloton-rider-2', 'peloton-rider-3', 'peloton-rider-4'];
   function drawPeloton(dt) {
-    /* Each peloton rider has a relativeAhead (forward distance from player)
-       and a laneX. They drift slowly; if player goes fast they catch up. */
-    peloton.forEach(c => {
+    peloton.forEach((c, i) => {
       const target = state.speed * 1.05;
       const drift = (1 - target) * 14 * dt;
       c.relativeAhead = Math.max(-40, Math.min(900, c.relativeAhead + drift));
@@ -515,39 +549,30 @@
       const wx = laneToWorldX(c.laneX);
       const sx = worldXToScreenX(wx);
       const sy = worldYToScreenY(wy);
-      if (sy < -40 || sy > viewH + 40) return;
-      const baseScale = Math.max(1.6, Math.min(2.8, viewH / 320));
-      drawCyclistTopDown(sx, sy, {
-        scale: baseScale * 0.85,
+      if (sy < -50 || sy > viewH + 50) return;
+      const h = Math.max(56, Math.min(100, viewH * 0.11));
+      drawCyclistSprite(sx, sy, {
+        spriteId: PELOTON_SPRITES[i % PELOTON_SPRITES.length],
+        height: h,
         phase: c.bobPhase,
-        color: c.color,
-        accent: '#fff'
+        color: c.color
       });
     });
   }
 
-  /* ---- PLAYER ---- */
+  /* ---- PLAYER (sprite-based) ---- */
   function drawPlayer() {
     const sx = worldXToScreenX(state.laneX);
     const sy = playerScreenY();
-    /* lean indicator from input */
     const tilt = (window.rcInput && window.rcInput.laneInput()) || 0;
-    const baseScale = Math.max(1.8, Math.min(3.2, viewH / 280));
-    drawCyclistTopDown(sx, sy, {
-      scale: baseScale,
-      phase: state.pedalPhase,
-      color: '#e53747',
-      accent: '#e4cb9d',
+    const h = Math.max(80, Math.min(140, viewH * 0.16));
+    drawCyclistSprite(sx, sy, {
+      spriteId: 'cyclist-player-topdown',
+      height: h,
+      tilt,
       isPlayer: true,
-      tilt
+      anaerobic: state.boostMul > 1.05 || state.cadence > 110
     });
-    /* Boost glow when sprinting */
-    if (state.boostMul > 1.05 || state.cadence > 110) {
-      ctx.fillStyle = 'rgba(229, 55, 71, 0.18)';
-      ctx.beginPath();
-      ctx.arc(sx, sy, 26 * baseScale * 0.5, 0, Math.PI * 2);
-      ctx.fill();
-    }
   }
 
   /* ---- STATIONS — handled in pickups.js, given a screen position ---- */
@@ -658,6 +683,7 @@
 
       maintainWorld();
       checkSegment();
+      if (window.rcLandmarks) window.rcLandmarks.tick(state);
       if (state.stations.length) window.rcPickups.collectIfPassed(state, state.stations);
       if (window.rcTactics) window.rcTactics.tick(state, () => {});
 
@@ -704,6 +730,19 @@
     initialSpawn();
     initPeloton();
     requestAnimationFrame(frame);
+
+    /* Preload race-specific sprites in the background. Renders use
+       fallbacks until images arrive. */
+    if (window.rcSprites && window.rcSprites.preload) {
+      window.rcSprites.preload([
+        'cyclist-player-topdown',
+        'peloton-rider-1', 'peloton-rider-2', 'peloton-rider-3', 'peloton-rider-4',
+        'station-gel', 'station-bar', 'station-drink',
+        'valtice-morning', 'lednice-vineyards', 'mikulov-overlook',
+        'devin-climb', 'novomlynske-reservoirs', 'tesarova-past-pass', 'reistna-kolonada'
+      ]);
+    }
+    if (window.rcLandmarks) window.rcLandmarks.reset();
 
     try {
       const m = await window.rcMonument.load(opts.monumentId || monumentId);

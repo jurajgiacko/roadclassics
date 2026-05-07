@@ -94,31 +94,36 @@
       "id": "cyclist-player-topdown",
       "category": "characters",
       "aspect": "1:1",
-      "prompt": "Top-down view sprite of a road cyclist seen from above, red jersey, aero helmet visible, two wheels foreshortened, hands on drop bars, transparent background, character design"
+      "prompt": "Top-down view of a single road cyclist as seen from directly above — red Enervit jersey with cream stripe, aero helmet (oval seen from top), two thin foreshortened wheel ovals, arms reaching forward to drop bars. Compact sprite-icon composition, slight 3/4 angle suggesting forward motion",
+      "style": "Clean character sprite illustration, single isolated subject ONLY, plain transparent or pure off-white background. No road, no scenery, no landscape, no other riders, no buildings, no shadow on ground (subject only). The cyclist must be the entire focus, centered."
     },
     {
       "id": "peloton-rider-1",
       "category": "characters",
       "aspect": "1:1",
-      "prompt": "Top-down sprite of a road cyclist in a deep burgundy jersey with cream stripe, aero helmet, transparent background, character design"
+      "prompt": "Top-down view of a single road cyclist seen from above — deep burgundy jersey with cream shoulder stripe, aero helmet (oval seen from top), thin foreshortened wheel ovals, arms reaching forward to drop bars. Compact sprite icon",
+      "style": "Clean character sprite illustration, single isolated subject ONLY, plain transparent or pure off-white background. No road, no scenery, no landscape, no other riders, no buildings, no shadow on ground (subject only). The cyclist must be the entire focus, centered."
     },
     {
       "id": "peloton-rider-2",
       "category": "characters",
       "aspect": "1:1",
-      "prompt": "Top-down sprite of a road cyclist in a wine-red jersey with white shoulder bands, transparent background"
+      "prompt": "Top-down view of a single road cyclist seen from above — wine-red jersey with white shoulder bands, aero helmet, thin foreshortened wheel ovals, arms reaching forward. Compact sprite icon",
+      "style": "Clean character sprite illustration, single isolated subject ONLY, plain transparent or pure off-white background. No road, no scenery, no landscape, no other riders, no buildings, no shadow on ground."
     },
     {
       "id": "peloton-rider-3",
       "category": "characters",
       "aspect": "1:1",
-      "prompt": "Top-down sprite of a road cyclist in a dusty pink jersey with cream piping, transparent background"
+      "prompt": "Top-down view of a single road cyclist seen from above — dusty pink jersey with cream piping, aero helmet, thin foreshortened wheel ovals, arms reaching forward. Compact sprite icon",
+      "style": "Clean character sprite illustration, single isolated subject ONLY, plain transparent or pure off-white background. No road, no scenery, no landscape, no other riders, no buildings, no shadow on ground."
     },
     {
       "id": "peloton-rider-4",
       "category": "characters",
       "aspect": "1:1",
-      "prompt": "Top-down sprite of a road cyclist in a cream jersey with burgundy panels, transparent background"
+      "prompt": "Top-down view of a single road cyclist seen from above — cream jersey with burgundy side panels, aero helmet, thin foreshortened wheel ovals, arms reaching forward. Compact sprite icon",
+      "style": "Clean character sprite illustration, single isolated subject ONLY, plain transparent or pure off-white background. No road, no scenery, no landscape, no other riders, no buildings, no shadow on ground."
     },
     {
       "id": "winemaker",
@@ -143,19 +148,22 @@
       "id": "station-gel",
       "category": "stations",
       "aspect": "1:1",
-      "prompt": "3/4 view illustration of a Road Classics feed station tent in vivid Enervit red, a small folding table with rows of orange Enervit Carbo Gel C2:1PRO sachets, two volunteers in red shirts handing them out, transparent background"
+      "prompt": "Top-down 3/4 view of a small Enervit-red feed-station tent on a small grass patch, folding table in front with rows of orange gel sachets, one volunteer in red. Compact sprite, looking down on it from above-front",
+      "style": "Single isolated tent illustration, plain off-white or pure transparent background. No road, no full landscape, no other props beyond the tent + volunteer + table. Subject must fit cleanly in a 1:1 frame for use as a game sprite."
     },
     {
       "id": "station-bar",
       "category": "stations",
       "aspect": "1:1",
-      "prompt": "3/4 view feed station tent in Enervit red with a table of stacked green Enervit Carbo Bar C2:1PRO bars, volunteer extending a bar toward camera, transparent background"
+      "prompt": "Top-down 3/4 view of a small Enervit-red feed-station tent on a small grass patch, folding table in front with stacked green Carbo Bar wrappers, one volunteer in red. Compact sprite",
+      "style": "Single isolated tent illustration, plain off-white or pure transparent background. No road, no full landscape, no other props beyond the tent + volunteer + table. Subject must fit cleanly in a 1:1 frame for use as a game sprite."
     },
     {
       "id": "station-drink",
       "category": "stations",
       "aspect": "1:1",
-      "prompt": "3/4 view feed station tent in Enervit red with rows of blue Enervit Isocarb C2:1PRO drink bottles, volunteer holding a bottle up, water cooler in background, transparent background"
+      "prompt": "Top-down 3/4 view of a small Enervit-red feed-station tent on a small grass patch, folding table in front with rows of blue Isocarb drink sachets, one volunteer in red holding a bottle. Compact sprite",
+      "style": "Single isolated tent illustration, plain off-white or pure transparent background. No road, no full landscape, no other props beyond the tent + volunteer + table. Subject must fit cleanly in a 1:1 frame for use as a game sprite."
     },
 
     {

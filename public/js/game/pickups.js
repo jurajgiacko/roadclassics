@@ -47,94 +47,73 @@
     state.pickupsCollected = (state.pickupsCollected || 0) + 1;
   }
 
-  /* Render: top-down Enervit feed station at screen (sx, sy).
-     Looks like a small red tent + flag pole + product crates from above.
-     Tag with product short code is placed pointing toward the road. */
+  /* Render: illustrated Enervit feed station sprite at (sx, sy).
+     Falls back to a tiny procedural tent if sprites aren't loaded yet. */
+  const SPRITE_BY_TYPE = {
+    gel:   'station-gel',
+    bar:   'station-bar',
+    drink: 'station-drink'
+  };
+
   function renderStation(ctx, station, sx, sy) {
     const prod = PRODUCT[station.type];
+    const spriteId = SPRITE_BY_TYPE[station.type] || 'station-gel';
+    const img = window.rcSprites && window.rcSprites.get && window.rcSprites.get(spriteId);
 
-    /* Shadow */
-    ctx.fillStyle = 'rgba(0,0,0,0.34)';
+    /* shadow */
+    ctx.fillStyle = 'rgba(0,0,0,0.42)';
     ctx.beginPath();
-    ctx.ellipse(sx, sy + 8, 22, 6, 0, 0, Math.PI * 2);
+    ctx.ellipse(sx, sy + 22, 36, 8, 0, 0, Math.PI * 2);
     ctx.fill();
 
-    /* Tent — red circle with cross-bracing for that classic festival tent look */
-    ctx.fillStyle = '#e30613';
-    ctx.beginPath();
-    ctx.ellipse(sx, sy, 18, 14, 0, 0, Math.PI * 2);
-    ctx.fill();
-    /* Bright top strip */
-    ctx.fillStyle = '#ff2a36';
-    ctx.beginPath();
-    ctx.ellipse(sx, sy - 4, 17, 5, 0, 0, Math.PI * 2);
-    ctx.fill();
-    /* Cross seam (4 directions) */
-    ctx.strokeStyle = 'rgba(255,255,255,0.5)';
-    ctx.lineWidth = 1;
-    ctx.beginPath();
-    ctx.moveTo(sx - 17, sy); ctx.lineTo(sx + 17, sy);
-    ctx.moveTo(sx, sy - 13); ctx.lineTo(sx, sy + 13);
-    ctx.stroke();
-
-    /* ENERVIT label */
-    ctx.fillStyle = '#fff';
-    ctx.font = '700 7px Inter, sans-serif';
-    ctx.textAlign = 'center';
-    ctx.textBaseline = 'middle';
-    ctx.fillText('ENERVIT', sx, sy);
-
-    /* Flag pole on top */
-    ctx.fillStyle = '#888';
-    ctx.fillRect(sx - 0.6, sy - 22, 1.2, 8);
-    ctx.fillStyle = '#e30613';
-    ctx.beginPath();
-    ctx.moveTo(sx, sy - 22);
-    ctx.lineTo(sx + 8, sy - 20);
-    ctx.lineTo(sx, sy - 18);
-    ctx.closePath();
-    ctx.fill();
-
-    /* Product crates beside tent (small colored squares) */
-    const cratePalette = { gel: '#ff8c00', bar: '#2a8b3a', drink: '#1f78d1' };
-    const crateColor = cratePalette[station.type] || '#888';
-    ctx.fillStyle = crateColor;
-    ctx.fillRect(sx - 22, sy + 4, 5, 5);
-    ctx.fillRect(sx + 17, sy + 4, 5, 5);
-    ctx.fillStyle = 'rgba(255,255,255,0.5)';
-    ctx.fillRect(sx - 22, sy + 6, 5, 1);
-    ctx.fillRect(sx + 17, sy + 6, 5, 1);
-
-    /* Product tag below the tent */
-    if (prod) {
-      ctx.fillStyle = 'rgba(0,0,0,0.78)';
-      ctx.fillRect(sx - 26, sy + 12, 52, 12);
+    if (img && img.width >= 4) {
+      const h = 88;
+      const w = h * (img.width / img.height);
+      ctx.drawImage(img, sx - w / 2, sy - h * 0.65, w, h);
+    } else {
+      /* fallback minimalist tent */
+      ctx.fillStyle = '#e30613';
+      ctx.beginPath();
+      ctx.ellipse(sx, sy, 22, 16, 0, 0, Math.PI * 2);
+      ctx.fill();
       ctx.fillStyle = '#fff';
       ctx.font = '700 8px Inter, sans-serif';
       ctx.textAlign = 'center';
       ctx.textBaseline = 'middle';
-      ctx.fillText(prod.short, sx, sy + 18);
+      ctx.fillText('ENERVIT', sx, sy);
     }
 
-    /* Collected check */
+    /* Product short code tag below the tent */
+    if (prod) {
+      ctx.fillStyle = 'rgba(0,0,0,0.85)';
+      const tw = 64, th = 16;
+      ctx.fillRect(sx - tw / 2, sy + 26, tw, th);
+      ctx.fillStyle = '#fff';
+      ctx.font = '700 9px Inter, sans-serif';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText(prod.short, sx, sy + 26 + th / 2);
+    }
+
+    /* Collected / missed marker */
     if (station.collected && !station.missed) {
       ctx.fillStyle = '#198754';
-      ctx.beginPath(); ctx.arc(sx + 14, sy - 14, 5, 0, Math.PI * 2); ctx.fill();
+      ctx.beginPath(); ctx.arc(sx + 26, sy - 32, 8, 0, Math.PI * 2); ctx.fill();
       ctx.strokeStyle = '#fff';
-      ctx.lineWidth = 1.5;
+      ctx.lineWidth = 2;
       ctx.beginPath();
-      ctx.moveTo(sx + 11.5, sy - 14);
-      ctx.lineTo(sx + 13,   sy - 12);
-      ctx.lineTo(sx + 16,   sy - 16);
+      ctx.moveTo(sx + 22, sy - 32);
+      ctx.lineTo(sx + 25, sy - 29);
+      ctx.lineTo(sx + 30, sy - 35);
       ctx.stroke();
     } else if (station.missed) {
       ctx.fillStyle = '#dc3545';
-      ctx.beginPath(); ctx.arc(sx + 14, sy - 14, 5, 0, Math.PI * 2); ctx.fill();
+      ctx.beginPath(); ctx.arc(sx + 26, sy - 32, 8, 0, Math.PI * 2); ctx.fill();
       ctx.strokeStyle = '#fff';
-      ctx.lineWidth = 1.5;
+      ctx.lineWidth = 2;
       ctx.beginPath();
-      ctx.moveTo(sx + 11.5, sy - 16); ctx.lineTo(sx + 16.5, sy - 11);
-      ctx.moveTo(sx + 16.5, sy - 16); ctx.lineTo(sx + 11.5, sy - 11);
+      ctx.moveTo(sx + 22, sy - 36); ctx.lineTo(sx + 30, sy - 28);
+      ctx.moveTo(sx + 30, sy - 36); ctx.lineTo(sx + 22, sy - 28);
       ctx.stroke();
     }
   }
