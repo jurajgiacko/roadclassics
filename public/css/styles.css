@@ -286,7 +286,8 @@ body.game {
   max-width: 1400px;
   display: block;
   margin: 0 auto;
-  background: linear-gradient(180deg, #1a2238 0%, #524763 50%, #cfa97a 100%);
+  /* dark wine canvas — matches the @road__classics × @themartinpaseka illustration */
+  background: linear-gradient(180deg, #170410 0%, #2c0814 55%, #45102a 100%);
   touch-action: manipulation;
 }
 

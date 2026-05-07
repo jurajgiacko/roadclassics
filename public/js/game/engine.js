@@ -115,15 +115,22 @@
   function pick(arr) { return arr[Math.floor(Math.random() * arr.length)]; }
 
   function spawnProp(worldX) {
-    const kind = pick(['vine','vine','vine','vine','tree','tree','tree','house','house','tower']);
+    const kind = pick([
+      'tree','tree','tree','tree',
+      'vinecluster','vinecluster',
+      'house','house',
+      'tower',
+      'barrel',
+      'rsign'
+    ]);
     const detail = {
       kind,
       worldX,
       hue: rand(0, 1),
-      size: rand(0.85, 1.15),
+      size: rand(0.9, 1.2),
       colorVariant: Math.floor(rand(0, 3))
     };
-    if (kind === 'vine') detail.bunches = Math.floor(rand(3, 6));
+    if (kind === 'vinecluster') detail.rows = Math.floor(rand(3, 5));
     props.push(detail);
   }
 
@@ -132,7 +139,9 @@
   }
 
   function initPeloton() {
-    const colors = ['#1f78d1','#ffd43b','#7e3af2','#fb7185','#10b981'];
+    /* peloton jersey colors all sit in the burgundy/cream palette so the
+       player's Enervit red jumps out as the focal point */
+    const colors = ['#a52447', '#7c1a32', '#c44470', '#5a1530', '#e4cb9d'];
     for (let i = 0; i < 4; i++) {
       peloton.push({
         relativeAhead: 220 + i * 70 + rand(-20, 20),
@@ -142,40 +151,72 @@
     }
   }
 
-  /* ---- Render: SKY ---- */
+  /* ---- COLOR PALETTE — Road Classics × @themartinpaseka monochrome wine ---- */
+  const PAL = {
+    skyTop:    '#170410',
+    skyMid:    '#2c0814',
+    skyBot:    '#45102a',
+    farHill:   '#5a1530',
+    midHill:   '#3d0c20',
+    grass:     '#2a0716',
+    grassDark: '#1c0510',
+    asphalt:   '#0e0309',
+    asphaltMid:'#1a0410',
+    cream:     '#f0d4a0',
+    creamSoft: '#e4cb9d',
+    wineBright:'#a52447',
+    winePink:  '#c44470',
+    woodPole:  '#5a3526',
+    leafDark:  '#3a0c1d',
+    leafMid:   '#5a1530',
+    leafLight: '#8a2a4d',
+    roofTile:  '#7a1a30',
+    barrelOak: '#4a2010',
+    barrelBand:'#1a0510'
+  };
+
+  /* ---- Render: SKY (dark monochrome wine) ---- */
   function drawSky() {
-    /* segment-tinted gradient */
     const seg = state.activeSegment;
-    let topCol = '#1c2c4a', midCol = '#cb7d62', botCol = '#f3c79b';
+    /* Subtle segment shift so climbs feel deeper, descents lighter */
+    let top = PAL.skyTop, mid = PAL.skyMid, bot = PAL.skyBot;
     if (seg) {
-      if (seg.kind === 'climb')   { topCol = '#2a1f3b'; midCol = '#a85a4f'; botCol = '#e7b58a'; }
-      if (seg.kind === 'descent') { topCol = '#1a2840'; midCol = '#7e7c8c'; botCol = '#dabe97'; }
-      if (seg.kind === 'flat')    { topCol = '#1c2c4a'; midCol = '#c9836a'; botCol = '#f4cda3'; }
+      if (seg.kind === 'climb')   { top = '#0e030a'; mid = '#26050f'; bot = '#3a0c1f'; }
+      if (seg.kind === 'descent') { top = '#1c0612'; mid = '#3a0e1f'; bot = '#52183a'; }
     }
     const g = ctx.createLinearGradient(0, 0, 0, viewH);
-    g.addColorStop(0, topCol);
-    g.addColorStop(0.55, midCol);
-    g.addColorStop(0.95, botCol);
+    g.addColorStop(0, top);
+    g.addColorStop(0.6, mid);
+    g.addColorStop(1, bot);
     ctx.fillStyle = g;
     ctx.fillRect(0, 0, viewW, viewH);
 
-    /* Sun disc — lower right */
-    const sunY = viewH * 0.28;
-    const sunX = viewW * 0.78;
-    const sunR = Math.min(viewW, viewH) * 0.07;
-    const sg = ctx.createRadialGradient(sunX, sunY, sunR * 0.4, sunX, sunY, sunR * 1.6);
-    sg.addColorStop(0, 'rgba(255, 220, 170, 0.95)');
-    sg.addColorStop(0.5, 'rgba(255, 180, 130, 0.5)');
-    sg.addColorStop(1, 'rgba(255, 180, 130, 0)');
+    /* Faint grid pattern overlay (matches the dotted grid in the IG frame) */
+    ctx.fillStyle = 'rgba(255,255,255,0.02)';
+    const grid = 14;
+    const gridOff = (state.distance * 0.05) % grid;
+    for (let x = -gridOff; x < viewW; x += grid) {
+      for (let y = 0; y < viewH; y += grid) {
+        ctx.fillRect(x, y, 1, 1);
+      }
+    }
+
+    /* Soft moon disc — replaces the sunset sun */
+    const moonY = viewH * 0.22;
+    const moonX = viewW * 0.78;
+    const moonR = Math.min(viewW, viewH) * 0.05;
+    const sg = ctx.createRadialGradient(moonX, moonY, moonR * 0.3, moonX, moonY, moonR * 1.8);
+    sg.addColorStop(0, 'rgba(240, 212, 160, 0.55)');
+    sg.addColorStop(1, 'rgba(240, 212, 160, 0)');
     ctx.fillStyle = sg;
-    ctx.fillRect(sunX - sunR * 1.6, sunY - sunR * 1.6, sunR * 3.2, sunR * 3.2);
-    ctx.fillStyle = 'rgba(255, 230, 190, 0.95)';
+    ctx.fillRect(moonX - moonR * 1.8, moonY - moonR * 1.8, moonR * 3.6, moonR * 3.6);
+    ctx.fillStyle = 'rgba(240, 212, 160, 0.65)';
     ctx.beginPath();
-    ctx.arc(sunX, sunY, sunR * 0.55, 0, Math.PI * 2);
+    ctx.arc(moonX, moonY, moonR * 0.55, 0, Math.PI * 2);
     ctx.fill();
 
-    /* Drifting clouds (slow parallax) */
-    ctx.fillStyle = 'rgba(255,255,255,0.18)';
+    /* Slow clouds — burgundy tinted to fit the night-wine palette */
+    ctx.fillStyle = 'rgba(165, 36, 71, 0.18)';
     const cloudOff = state.distance * 0.04;
     for (let i = 0; i < 5; i++) {
       const cx = ((i * 280 - cloudOff) % (viewW + 400) + viewW + 400) % (viewW + 400) - 100;
@@ -192,9 +233,9 @@
     ctx.fill();
   }
 
-  /* ---- Render: HILLS (background silhouettes) ---- */
+  /* ---- Render: HILLS (flat burgundy silhouettes) ---- */
   function drawFarHills() {
-    ctx.fillStyle = 'rgba(69, 5, 33, 0.55)';
+    ctx.fillStyle = PAL.farHill;
     const baseY = viewH * 0.55;
     const off = state.distance * 0.12;
     ctx.beginPath();
@@ -211,7 +252,7 @@
   }
 
   function drawMidHills() {
-    ctx.fillStyle = 'rgba(44, 3, 20, 0.78)';
+    ctx.fillStyle = PAL.midHill;
     const baseY = viewH * 0.66;
     const off = state.distance * 0.32;
     ctx.beginPath();
@@ -227,7 +268,7 @@
     ctx.fill();
   }
 
-  /* ---- Render: TERRAIN (the playable ground) ---- */
+  /* ---- Render: TERRAIN (flat burgundy with vineyard rows + wooden poles) ---- */
   function drawTerrain() {
     const samples = 80;
     const path = [];
@@ -237,8 +278,8 @@
       path.push({ sx, sy: terrainScreenY(wx), wx });
     }
 
-    /* Grass polygon */
-    ctx.fillStyle = '#3a5d2a';
+    /* Ground polygon — dark wine */
+    ctx.fillStyle = PAL.grass;
     ctx.beginPath();
     ctx.moveTo(0, viewH);
     for (const p of path) ctx.lineTo(p.sx, p.sy);
@@ -246,27 +287,59 @@
     ctx.closePath();
     ctx.fill();
 
-    /* Darker grass band just below surface for depth */
-    ctx.fillStyle = 'rgba(0, 0, 0, 0.18)';
+    /* Darker band below surface for depth */
+    ctx.fillStyle = PAL.grassDark;
     ctx.beginPath();
     ctx.moveTo(0, viewH);
-    for (const p of path) ctx.lineTo(p.sx, p.sy + 24);
+    for (const p of path) ctx.lineTo(p.sx, p.sy + 28);
     ctx.lineTo(viewW, viewH);
     ctx.closePath();
     ctx.fill();
 
+    /* Vineyard rows — parallel diagonal stripes with wooden T-stakes,
+       spaced regularly along the world. Inspired by the IG illustration:
+       receding rows of dark leafy foliage with cream-tipped wood poles. */
+    const rowStep = 40;
+    const rowStart = Math.floor((state.distance - 200) / rowStep) * rowStep;
+    for (let wx = rowStart; wx < state.distance + viewW + 200; wx += rowStep) {
+      const sx = worldToScreenX(wx);
+      if (sx < -20 || sx > viewW + 20) continue;
+      const sy = terrainScreenY(wx);
+      /* Foliage row — short cluster of bumps */
+      ctx.fillStyle = PAL.leafDark;
+      ctx.beginPath();
+      ctx.ellipse(sx,        sy + 18, 9, 6, 0, 0, Math.PI * 2);
+      ctx.ellipse(sx + 8,    sy + 16, 6, 5, 0, 0, Math.PI * 2);
+      ctx.ellipse(sx - 8,    sy + 17, 6, 5, 0, 0, Math.PI * 2);
+      ctx.fill();
+      /* Wooden T-stake (post + crossbar with cream tip) */
+      ctx.fillStyle = PAL.woodPole;
+      ctx.fillRect(sx - 0.6, sy + 6, 1.4, 14);
+      ctx.fillStyle = PAL.cream;
+      ctx.fillRect(sx - 1.5, sy + 6, 3, 1.4); /* cream tip */
+    }
+
     /* Asphalt strip following the surface */
-    ctx.strokeStyle = '#1f1c18';
-    ctx.lineWidth = 14;
+    ctx.strokeStyle = PAL.asphalt;
+    ctx.lineWidth = 16;
     ctx.lineJoin = 'round';
+    ctx.lineCap = 'round';
     ctx.beginPath();
     ctx.moveTo(path[0].sx, path[0].sy + 4);
     for (const p of path) ctx.lineTo(p.sx, p.sy + 4);
     ctx.stroke();
 
-    /* Yellow dashed center stripe */
-    ctx.strokeStyle = 'rgba(228, 203, 157, 0.85)';
-    ctx.lineWidth = 1.5;
+    /* Asphalt highlight (lighter middle band) */
+    ctx.strokeStyle = PAL.asphaltMid;
+    ctx.lineWidth = 10;
+    ctx.beginPath();
+    ctx.moveTo(path[0].sx, path[0].sy + 4);
+    for (const p of path) ctx.lineTo(p.sx, p.sy + 4);
+    ctx.stroke();
+
+    /* Cream dashed center stripe */
+    ctx.strokeStyle = PAL.creamSoft;
+    ctx.lineWidth = 1.6;
     const dashLen = 14, gapLen = 16;
     ctx.setLineDash([dashLen, gapLen]);
     ctx.lineDashOffset = -((state.distance) % (dashLen + gapLen));
@@ -275,124 +348,194 @@
     for (const p of path) ctx.lineTo(p.sx, p.sy + 4);
     ctx.stroke();
     ctx.setLineDash([]);
-
-    /* Vineyard texture — short vertical green tufts on the grass below road */
-    ctx.fillStyle = 'rgba(20, 50, 18, 0.55)';
-    const tuftStep = 26;
-    const tuftOffset = Math.floor(state.distance / tuftStep) * tuftStep;
-    for (let wx = state.distance - 200; wx < state.distance + viewW + 200; wx += tuftStep) {
-      const sx = worldToScreenX(wx);
-      if (sx < -10 || sx > viewW + 10) continue;
-      const sy = terrainScreenY(wx) + 16;
-      ctx.fillRect(sx - 1, sy + 4, 2, 8);
-      ctx.fillRect(sx + 6, sy + 8, 2, 6);
-    }
   }
 
-  /* ---- Render: PROPS on terrain ---- */
+  /* ---- Render: PROPS on terrain (flat illustrated style) ---- */
+
+  /* Tree — rounded cluster of overlapping foliage circles in 3 burgundy tones */
   function drawTree(p) {
     const sx = worldToScreenX(p.worldX);
     if (sx < -50 || sx > viewW + 50) return;
     const sy = terrainScreenY(p.worldX);
     const h = 60 * p.size;
     /* trunk */
-    ctx.fillStyle = '#2e1f14';
-    ctx.fillRect(sx - 2, sy - h * 0.45, 4, h * 0.45);
-    /* canopy */
-    ctx.fillStyle = ['#234d20', '#2d6128', '#1b4519'][p.colorVariant % 3];
+    ctx.fillStyle = PAL.barrelOak;
+    ctx.fillRect(sx - 2, sy - h * 0.35, 4, h * 0.35);
+    /* canopy — three layered round cluster (like the IG illustration trees) */
+    const canopyR = h * 0.28;
+    const baseY = sy - h * 0.45;
+    /* darkest back layer */
+    ctx.fillStyle = PAL.leafDark;
     ctx.beginPath();
-    ctx.ellipse(sx, sy - h * 0.65, h * 0.36, h * 0.46, 0, 0, Math.PI * 2);
+    ctx.arc(sx - canopyR * 0.4, baseY - canopyR * 0.2, canopyR, 0, Math.PI * 2);
+    ctx.arc(sx + canopyR * 0.5, baseY - canopyR * 0.1, canopyR * 0.9, 0, Math.PI * 2);
+    ctx.fill();
+    /* mid layer */
+    ctx.fillStyle = PAL.leafMid;
+    ctx.beginPath();
+    ctx.arc(sx, baseY - canopyR * 0.5, canopyR * 0.85, 0, Math.PI * 2);
+    ctx.arc(sx - canopyR * 0.6, baseY - canopyR * 0.1, canopyR * 0.75, 0, Math.PI * 2);
+    ctx.fill();
+    /* light highlight (on top-right) */
+    ctx.fillStyle = PAL.leafLight;
+    ctx.beginPath();
+    ctx.arc(sx + canopyR * 0.2, baseY - canopyR * 0.7, canopyR * 0.35, 0, Math.PI * 2);
     ctx.fill();
   }
 
+  /* Moravian house — cream walls, burgundy gable roof, tall narrow form */
   function drawHouse(p) {
     const sx = worldToScreenX(p.worldX);
     if (sx < -80 || sx > viewW + 80) return;
     const sy = terrainScreenY(p.worldX);
-    const w = 64 * p.size;
-    const h = 42 * p.size;
+    const w = 56 * p.size;
+    const h = 50 * p.size;
     const x = sx - w / 2;
     const y = sy - h;
     /* walls */
-    ctx.fillStyle = '#f3eadb';
+    ctx.fillStyle = PAL.cream;
     ctx.fillRect(x, y, w, h);
-    /* roof */
-    ctx.fillStyle = ['#a3431f', '#b85530', '#8d3a1e'][p.colorVariant % 3];
+    /* roof — gable */
+    ctx.fillStyle = PAL.roofTile;
     ctx.beginPath();
     ctx.moveTo(x - w * 0.08, y);
     ctx.lineTo(x + w * 0.5, y - h * 0.5);
     ctx.lineTo(x + w * 1.08, y);
     ctx.closePath();
     ctx.fill();
-    /* door + window */
-    ctx.fillStyle = '#2b1c10';
+    /* door */
+    ctx.fillStyle = PAL.barrelOak;
     ctx.fillRect(x + w * 0.12, y + h * 0.45, w * 0.18, h * 0.55);
-    ctx.fillStyle = '#36281a';
-    ctx.fillRect(x + w * 0.5, y + h * 0.32, w * 0.28, h * 0.32);
-    /* window panes */
-    ctx.strokeStyle = '#f3eadb';
+    /* window — small square */
+    ctx.fillStyle = PAL.skyBot;
+    ctx.fillRect(x + w * 0.55, y + h * 0.32, w * 0.25, h * 0.3);
+    /* window cross */
+    ctx.strokeStyle = PAL.cream;
     ctx.lineWidth = 1;
     ctx.beginPath();
-    ctx.moveTo(x + w * 0.64, y + h * 0.32);
-    ctx.lineTo(x + w * 0.64, y + h * 0.64);
+    ctx.moveTo(x + w * 0.675, y + h * 0.32);
+    ctx.lineTo(x + w * 0.675, y + h * 0.62);
+    ctx.moveTo(x + w * 0.55, y + h * 0.47);
+    ctx.lineTo(x + w * 0.8, y + h * 0.47);
     ctx.stroke();
   }
 
+  /* Church tower — tall slim with cream walls, dark spire, Pálava skyline */
   function drawTower(p) {
     const sx = worldToScreenX(p.worldX);
     if (sx < -60 || sx > viewW + 60) return;
     const sy = terrainScreenY(p.worldX);
     const w = 22 * p.size;
-    const h = 92 * p.size;
+    const h = 100 * p.size;
     const x = sx - w / 2;
     const y = sy - h;
-    /* base */
-    ctx.fillStyle = '#dccdb0';
-    ctx.fillRect(x, y + h * 0.32, w, h * 0.68);
-    /* spire */
-    ctx.fillStyle = '#5e2a14';
+    /* tower base — cream */
+    ctx.fillStyle = PAL.cream;
+    ctx.fillRect(x, y + h * 0.28, w, h * 0.72);
+    /* onion-style dome */
+    ctx.fillStyle = PAL.roofTile;
     ctx.beginPath();
-    ctx.moveTo(x - w * 0.15, y + h * 0.32);
-    ctx.lineTo(x + w * 0.5, y);
-    ctx.lineTo(x + w * 1.15, y + h * 0.32);
+    ctx.moveTo(x - w * 0.18, y + h * 0.28);
+    ctx.quadraticCurveTo(x + w * 0.5, y - h * 0.05, x + w * 1.18, y + h * 0.28);
     ctx.closePath();
     ctx.fill();
-    /* tiny window */
-    ctx.fillStyle = '#2b1c10';
-    ctx.fillRect(x + w * 0.4, y + h * 0.5, w * 0.2, h * 0.16);
+    /* spire tip */
+    ctx.fillStyle = PAL.barrelOak;
+    ctx.fillRect(x + w * 0.45, y - h * 0.05, w * 0.1, h * 0.08);
+    /* clock face */
+    ctx.fillStyle = PAL.barrelOak;
+    ctx.beginPath();
+    ctx.arc(x + w * 0.5, y + h * 0.5, w * 0.18, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = PAL.cream;
+    ctx.beginPath();
+    ctx.arc(x + w * 0.5, y + h * 0.5, w * 0.04, 0, Math.PI * 2);
+    ctx.fill();
+    /* tall arched window */
+    ctx.fillStyle = PAL.skyBot;
+    ctx.fillRect(x + w * 0.4, y + h * 0.7, w * 0.2, h * 0.18);
   }
 
-  function drawVine(p) {
+  /* Vineyard cluster — multiple parallel rows of foliage with wood T-stakes,
+     drawn as a small farm patch standing on the terrain */
+  function drawVineCluster(p) {
     const sx = worldToScreenX(p.worldX);
-    if (sx < -40 || sx > viewW + 40) return;
+    if (sx < -50 || sx > viewW + 50) return;
     const sy = terrainScreenY(p.worldX);
-    /* a small bush + grape clusters */
-    const bunches = p.bunches || 4;
-    ctx.fillStyle = '#1d4419';
-    ctx.beginPath();
-    ctx.ellipse(sx, sy - 10, 14 * p.size, 8 * p.size, 0, 0, Math.PI * 2);
-    ctx.fill();
-    /* vertical poles + horizontal wire */
-    ctx.strokeStyle = '#3a2a1a';
-    ctx.lineWidth = 1;
-    ctx.beginPath();
-    ctx.moveTo(sx - 10 * p.size, sy);
-    ctx.lineTo(sx - 10 * p.size, sy - 16);
-    ctx.moveTo(sx + 10 * p.size, sy);
-    ctx.lineTo(sx + 10 * p.size, sy - 16);
-    ctx.moveTo(sx - 10 * p.size, sy - 14);
-    ctx.lineTo(sx + 10 * p.size, sy - 14);
-    ctx.stroke();
-    /* grape dots */
-    ctx.fillStyle = '#6b3aa6';
-    for (let i = 0; i < bunches; i++) {
-      const bx = sx - 8 * p.size + (i / bunches) * 16 * p.size;
+    const rows = p.rows || 3;
+    /* poles + foliage rows */
+    for (let r = 0; r < rows; r++) {
+      const ry = sy - r * 6 * p.size;
+      const rw = 28 * p.size;
+      /* foliage row (dark burgundy ellipse) */
+      ctx.fillStyle = PAL.leafDark;
       ctx.beginPath();
-      ctx.arc(bx, sy - 8, 1.6, 0, Math.PI * 2);
+      ctx.ellipse(sx, ry - 4, rw, 5 * p.size, 0, 0, Math.PI * 2);
       ctx.fill();
+      /* mid highlight */
+      ctx.fillStyle = PAL.leafMid;
+      ctx.beginPath();
+      ctx.ellipse(sx + 4, ry - 5, rw * 0.55, 3 * p.size, 0, 0, Math.PI * 2);
+      ctx.fill();
+      /* poles at each end (T-shaped) */
+      ctx.fillStyle = PAL.woodPole;
+      ctx.fillRect(sx - rw - 1, ry - 8, 1.5, 12);
+      ctx.fillRect(sx + rw - 0.5, ry - 8, 1.5, 12);
+      /* cream tops on poles (like in the illustration) */
+      ctx.fillStyle = PAL.cream;
+      ctx.fillRect(sx - rw - 2.5, ry - 8, 4, 1.4);
+      ctx.fillRect(sx + rw - 2, ry - 8, 4, 1.4);
     }
   }
 
+  /* Wine barrel — oak with metal bands, cute roadside motif */
+  function drawBarrel(p) {
+    const sx = worldToScreenX(p.worldX);
+    if (sx < -40 || sx > viewW + 40) return;
+    const sy = terrainScreenY(p.worldX);
+    const w = 22 * p.size;
+    const h = 24 * p.size;
+    /* body */
+    ctx.fillStyle = PAL.barrelOak;
+    ctx.beginPath();
+    ctx.ellipse(sx, sy - h / 2, w / 2, h / 2, 0, 0, Math.PI * 2);
+    ctx.fill();
+    /* metal bands */
+    ctx.fillStyle = PAL.barrelBand;
+    ctx.fillRect(sx - w / 2 + 1, sy - h * 0.7, w - 2, 1.5);
+    ctx.fillRect(sx - w / 2 + 1, sy - h * 0.4, w - 2, 1.5);
+    /* highlight stave */
+    ctx.fillStyle = 'rgba(240, 212, 160, 0.18)';
+    ctx.fillRect(sx - 1, sy - h + 2, 2, h - 4);
+  }
+
+  /* Road Classics R-monogram sign — cream square plate on a stake */
+  function drawRSign(p) {
+    const sx = worldToScreenX(p.worldX);
+    if (sx < -40 || sx > viewW + 40) return;
+    const sy = terrainScreenY(p.worldX);
+    const w = 28;
+    /* stake */
+    ctx.fillStyle = PAL.woodPole;
+    ctx.fillRect(sx - 1, sy - 28, 2, 28);
+    /* plate */
+    ctx.fillStyle = PAL.cream;
+    ctx.fillRect(sx - w / 2, sy - 28 - w, w, w);
+    /* circle border */
+    ctx.strokeStyle = PAL.skyTop;
+    ctx.lineWidth = 1.5;
+    ctx.beginPath();
+    ctx.arc(sx, sy - 28 - w / 2, w * 0.36, 0, Math.PI * 2);
+    ctx.stroke();
+    /* R letter */
+    ctx.fillStyle = PAL.skyTop;
+    ctx.font = '900 16px Fraunces, Georgia, serif';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText('R', sx, sy - 28 - w / 2 + 1);
+  }
+
+  /* Km milestone sign (existing 'sign' kind from maintainWorld) */
   function drawSign(p) {
     const sx = worldToScreenX(p.worldX);
     if (sx < -40 || sx > viewW + 40) return;
@@ -400,16 +543,17 @@
     const w = 36;
     const h = 22;
     /* pole */
-    ctx.fillStyle = '#888';
+    ctx.fillStyle = PAL.woodPole;
     ctx.fillRect(sx - 1, sy - 28, 2, 28);
-    /* board */
-    ctx.fillStyle = '#fff';
-    ctx.strokeStyle = '#c00';
-    ctx.lineWidth = 2;
+    /* plate (cream with burgundy border) */
+    ctx.fillStyle = PAL.cream;
     ctx.fillRect(sx - w / 2, sy - 28 - h, w, h);
+    ctx.strokeStyle = PAL.wineBright;
+    ctx.lineWidth = 2;
     ctx.strokeRect(sx - w / 2, sy - 28 - h, w, h);
-    ctx.fillStyle = '#222';
-    ctx.font = '600 11px Inter, sans-serif';
+    /* km text */
+    ctx.fillStyle = PAL.skyTop;
+    ctx.font = '700 11px Inter, sans-serif';
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
     ctx.fillText(p.label || '', sx, sy - 28 - h / 2);
@@ -420,11 +564,13 @@
     const sorted = [...props].sort((a, b) => a.worldX - b.worldX);
     for (const p of sorted) {
       switch (p.kind) {
-        case 'tree': drawTree(p); break;
-        case 'house': drawHouse(p); break;
-        case 'tower': drawTower(p); break;
-        case 'vine': drawVine(p); break;
-        case 'sign': drawSign(p); break;
+        case 'tree':        drawTree(p); break;
+        case 'house':       drawHouse(p); break;
+        case 'tower':       drawTower(p); break;
+        case 'vinecluster': drawVineCluster(p); break;
+        case 'barrel':      drawBarrel(p); break;
+        case 'rsign':       drawRSign(p); break;
+        case 'sign':        drawSign(p); break;
       }
     }
   }
