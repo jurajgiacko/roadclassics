@@ -158,6 +158,20 @@
       location.reload();
     });
     els.share && els.share.addEventListener('click', () => shareScore(state));
+    const cont = document.getElementById('finish-continue');
+    cont && cont.addEventListener('click', () => {
+      /* Carry race outcomes into the journey for recovery + afterparty scenes */
+      if (window.rcScenes) {
+        const j = window.rcScenes.journey();
+        j.finishTime       = state.elapsed;
+        j.finishEnergy     = state.energy;
+        j.pickupsCollected = state.pickupsCollected || 0;
+        j.styleLog         = state.styleLog || [];
+        j.score            = state.score || 0;
+        els.modal && els.modal.classList.remove('show');
+        window.rcScenes.go('recovery');
+      }
+    });
   }
 
   window.rcFinish = { open, close, attach };

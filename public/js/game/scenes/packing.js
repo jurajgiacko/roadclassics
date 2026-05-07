@@ -1,33 +1,35 @@
-/* Packing scene — drag-drop Enervit C2:1PRO products into 3 jersey pockets.
-   Player has 6 slots in a tray and 3 pockets. Limit per pocket is 2 items.
-   Score reflects mix balance (1 of each is ideal). */
+/* Packing scene — drag-style chip-shuffle with select-then-place pattern.
+   Tap an item → it gets a gold ring (selected). Tap a pocket → places it
+   there. Tap an item already in a pocket → returns it to the tray. */
 (function () {
   let overlay = null;
-  /* Tray and pocket state */
+
   const ART = {
-    gel:   '/assets/scenes/stations/item-gel-sachet.png',
-    bar:   '/assets/scenes/stations/item-bar-wrapped.png',
-    drink: '/assets/scenes/stations/item-isocarb-sachet.png'
+    gel:    '/assets/scenes/stations/item-gel-sachet.png',
+    bar:    '/assets/scenes/stations/item-bar-wrapped.png',
+    drink:  '/assets/scenes/stations/item-isocarb-sachet.png',
+    banana: '/assets/scenes/prerace/food-banana.png'
   };
-  const TRAY = [
-    { id: 'gel1',   type: 'gel',   label: 'C2:1 GEL'   },
-    { id: 'gel2',   type: 'gel',   label: 'C2:1 GEL'   },
-    { id: 'gel3',   type: 'gel',   label: 'C2:1 GEL'   },
-    { id: 'bar1',   type: 'bar',   label: 'C2:1 BAR'   },
-    { id: 'bar2',   type: 'bar',   label: 'C2:1 BAR'   },
-    { id: 'drink1', type: 'drink', label: 'ISOCARB'    },
-    { id: 'drink2', type: 'drink', label: 'ISOCARB'    }
+
+  const TRAY_INITIAL = [
+    { id: 'gel1',   type: 'gel',    label: 'C2:1 GEL'   },
+    { id: 'gel2',   type: 'gel',    label: 'C2:1 GEL'   },
+    { id: 'gel3',   type: 'gel',    label: 'C2:1 GEL'   },
+    { id: 'bar1',   type: 'bar',    label: 'C2:1 BAR'   },
+    { id: 'bar2',   type: 'bar',    label: 'C2:1 BAR'   },
+    { id: 'drink1', type: 'drink',  label: 'ISOCARB'    },
+    { id: 'drink2', type: 'drink',  label: 'ISOCARB'    },
+    { id: 'banana1',type: 'banana', label: 'Banán'      }
   ];
+
   let tray = [];
-  let pockets = [[], [], []]; /* 3 pockets, max 2 items each */
+  let pockets = [[], [], []];   /* 3 pockets, max 2 each */
+  let selected = null;          /* selected item id */
 
   function reset() {
-    tray = TRAY.map(o => ({ ...o }));
+    tray = TRAY_INITIAL.map(o => ({ ...o }));
     pockets = [[], [], []];
-  }
-
-  function totalPocketed() {
-    return pockets.flat().length;
+    selected = null;
   }
 
   function build() {
@@ -38,9 +40,9 @@
     overlay.innerHTML = `
       <div class="bg-art" style="background-image:url('/assets/scenes/prerace/jersey-packing.png'); opacity:.18"></div>
       <div class="prerace-shell">
-        <div class="step-pill">Krok 3 / 5 · Tres</div>
+        <div class="step-pill">Krok 4 / 5 · Tres</div>
         <h2 class="title-display">Naplň si dres</h2>
-        <p class="lead">Maximálne <strong>2 produkty na vrecko</strong>. Vyvážená sada (1 gel + 1 bar + 1 drink) ti dá najväčší bonus.</p>
+        <p class="lead">Klepni produkt → klepni vrecko. <strong>Max 2 / vrecko.</strong> Vyvážená sada (gel + bar + drink) = max bonus.</p>
         <div class="packing-stage">
           <div class="jersey">
             <div class="pocket" data-i="0"><span class="lbl">L vrecko</span></div>
@@ -49,7 +51,8 @@
           </div>
           <div class="tray" id="pack-tray"></div>
         </div>
-        <button type="button" class="btn btn-primary" id="pack-confirm" disabled>Potvrdiť (0/6)</button>
+        <div class="prerace-foot" id="pack-hint">Tip: 1 banán + 1 gel + 1 drink dáva najvyrovnanejší boost.</div>
+        <button type="button" class="btn btn-primary" id="pack-confirm">Hotovo (0)</button>
         <button type="button" class="btn btn-ghost" id="pack-reset">Vyprázdniť</button>
       </div>
     `;
@@ -57,45 +60,66 @@
 
     overlay.querySelector('#pack-confirm').addEventListener('click', confirm);
     overlay.querySelector('#pack-reset').addEventListener('click', resetUI);
-
+    overlay.querySelectorAll('.pocket').forEach(pocketEl => {
+      pocketEl.addEventListener('click', (e) => {
+        if (e.target.closest('.pack-chip')) return; /* let chip click handle */
+        const i = +pocketEl.dataset.i;
+        placeSelectedInto(i);
+      });
+    });
     return overlay;
   }
 
   function chip(item) {
     const btn = document.createElement('button');
     btn.type = 'button';
-    btn.className = `pack-chip pack-${item.type}`;
+    btn.className = `pack-chip pack-${item.type}` + (selected === item.id ? ' selected' : '');
     btn.dataset.id = item.id;
     btn.dataset.type = item.type;
     btn.innerHTML = `
-      <span class="pack-img" style="background-image:url('${ART[item.type]}')" aria-hidden="true"></span>
+      <span class="pack-img" style="background-image:url('${ART[item.type] || ''}')" aria-hidden="true"></span>
       <span class="pack-name">${item.label}</span>
     `;
-    btn.addEventListener('click', () => moveItem(item.id));
+    btn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      handleChip(item);
+    });
     return btn;
   }
 
-  function moveItem(id) {
-    /* If item is in tray, find first pocket with space and move */
-    const idxTray = tray.findIndex(i => i.id === id);
-    if (idxTray !== -1) {
-      const targetP = pockets.findIndex(p => p.length < 2);
-      if (targetP === -1) return; /* all full */
-      pockets[targetP].push(tray[idxTray]);
-      tray.splice(idxTray, 1);
-      render();
-      return;
-    }
-    /* If item is in a pocket, move back to tray */
+  function handleChip(item) {
+    /* If chip is in a pocket → remove back to tray */
     for (let p = 0; p < 3; p++) {
-      const idx = pockets[p].findIndex(i => i.id === id);
+      const idx = pockets[p].findIndex(i => i.id === item.id);
       if (idx !== -1) {
         tray.push(pockets[p][idx]);
         pockets[p].splice(idx, 1);
+        selected = null;
         render();
         return;
       }
     }
+    /* In tray → toggle selection */
+    if (selected === item.id) selected = null;
+    else                       selected = item.id;
+    render();
+  }
+
+  function placeSelectedInto(pocketIdx) {
+    if (!selected) return;
+    const idxTray = tray.findIndex(i => i.id === selected);
+    if (idxTray === -1) return;
+    if (pockets[pocketIdx].length >= 2) {
+      /* gentle nope hint */
+      const pocketEl = overlay.querySelectorAll('.pocket')[pocketIdx];
+      pocketEl.classList.add('reject');
+      setTimeout(() => pocketEl.classList.remove('reject'), 300);
+      return;
+    }
+    pockets[pocketIdx].push(tray[idxTray]);
+    tray.splice(idxTray, 1);
+    selected = null;
+    render();
   }
 
   function render() {
@@ -105,12 +129,13 @@
     overlay.querySelectorAll('.pocket').forEach(pocketEl => {
       const i = +pocketEl.dataset.i;
       pocketEl.querySelectorAll('.pack-chip').forEach(c => c.remove());
+      pocketEl.classList.toggle('targetable', !!selected && pockets[i].length < 2);
       pockets[i].forEach(it => pocketEl.appendChild(chip(it)));
     });
-    const total = totalPocketed();
+    const total = pockets.flat().length;
     const btn = overlay.querySelector('#pack-confirm');
-    btn.textContent = `Potvrdiť (${total}/6)`;
-    btn.disabled = total === 0;
+    btn.textContent = `Hotovo (${total})`;
+    btn.disabled = false;
   }
 
   function resetUI() {
@@ -118,18 +143,23 @@
   }
 
   function confirm() {
-    /* Compute bonus based on type counts */
     const flat = pockets.flat();
     const counts = flat.reduce((a, c) => (a[c.type] = (a[c.type] || 0) + 1, a), {});
-    const has = (t) => counts[t] > 0;
     const j = window.rcScenes.journey();
-    j.pocketsLoaded = { gel: counts.gel || 0, bar: counts.bar || 0, drink: counts.drink || 0 };
+    j.pocketsLoaded = {
+      gel:    counts.gel    || 0,
+      bar:    counts.bar    || 0,
+      drink:  counts.drink  || 0,
+      banana: counts.banana || 0
+    };
 
     let bonus = 0;
-    if (has('gel') && has('bar') && has('drink')) bonus += 30;       /* balanced */
-    else if (Object.keys(counts).length === 2) bonus += 15;         /* 2 types */
-    else if (Object.keys(counts).length === 1) bonus += 5;          /* monoculture */
-    bonus += Math.min(15, flat.length * 2);                          /* total volume up to 6 = +12 */
+    const types = Object.keys(counts).length;
+    if (types >= 3)      bonus += 30; /* well diversified */
+    else if (types === 2) bonus += 15;
+    else if (types === 1) bonus += 5;
+    bonus += Math.min(15, flat.length * 2);
+    if (counts.banana) bonus += 10; /* banana adds a small fresh-fuel bonus */
     j.packingBonus = bonus;
     j.prepBonusEnergy = (j.prepBonusEnergy || 0) + Math.round(bonus / 3);
 

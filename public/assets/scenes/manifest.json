@@ -294,6 +294,58 @@
       "aspect": "1:1",
       "prompt": "Close-up of a road-bike rear drivetrain — silver cassette gears with stepped rings and an oily metallic chain wrapping around them. 3/4 angle, gear teeth and chain links clearly visible",
       "style": "Clean product-icon illustration on a plain off-white background. Single isolated subject only. Strict no-scenery rule: no landscape, no characters, no people, no buildings, no vineyards, no hills. Just the drivetrain on neutral background. Mechanical accuracy, subtle drop shadow."
+    },
+    {
+      "id": "food-banana",
+      "category": "prerace",
+      "aspect": "1:1",
+      "prompt": "A single ripe yellow banana with a small black tip on the stem, slight curve, soft 3/4 angle, gentle highlight on the top edge",
+      "style": "Clean product-icon illustration on a plain off-white background. Single isolated subject only. Strict no-scenery rule: no landscape, no characters, no people, no buildings, no other fruit. Just the banana on neutral background. Soft drop shadow."
+    },
+    {
+      "id": "recovery-prosecco",
+      "category": "finish",
+      "aspect": "1:1",
+      "prompt": "A tall champagne flute filled with sparkling pale-gold prosecco, fine bubbles rising, gentle glow",
+      "style": "Clean product-icon illustration on plain off-white background. Single isolated subject only. No people, no scenery. Soft drop shadow. Charming editorial line-art with flat fills."
+    },
+    {
+      "id": "recovery-beer",
+      "category": "finish",
+      "aspect": "1:1",
+      "prompt": "A pilsner glass of Czech lager, golden amber liquid, three fingers of dense white foam head, condensation droplets on the side",
+      "style": "Clean product-icon illustration on plain off-white background. Single isolated subject only. No people, no scenery. Soft drop shadow. Charming editorial line-art with flat fills."
+    },
+    {
+      "id": "recovery-r2",
+      "category": "finish",
+      "aspect": "1:1",
+      "prompt": "A single Enervit R2 Recovery drink shaker bottle — slim athletic shape, deep wine-red body with a cream cap, abstract logo band suggesting the wordmark (no readable lettering). 3/4 angle, glossy highlight",
+      "style": "Clean product-icon illustration on plain off-white background. Single isolated subject only. No people, no scenery. Soft drop shadow."
+    },
+    {
+      "id": "afterparty-cellar",
+      "category": "finish",
+      "aspect": "16:9",
+      "prompt": "Cozy underground Moravian wine cellar at night seen 3/4 from a low angle — vaulted brick ceiling, rows of oak barrels along the walls, candles on a long wooden table, three or four cyclists in casual evening wear gathered around the table with glasses of wine, dog mascot resting under the table"
+    },
+    {
+      "id": "afterparty-music",
+      "category": "finish",
+      "aspect": "16:9",
+      "prompt": "Cyclists dancing under string lights in a courtyard at dusk — a small folk band on a tiny stage, accordion and guitar, vineyards and cottage silhouettes in the distance, warm amber lantern glow, joyful relaxed mood"
+    },
+    {
+      "id": "afterparty-cheers",
+      "category": "finish",
+      "aspect": "16:9",
+      "prompt": "Close-up tabletop scene from above — five hands raising glasses of red wine in a toast, the glasses converging in the center of the frame, warm candlelight, rustic wooden table, a Road Classics cap and a bidon on the side"
+    },
+    {
+      "id": "afterparty-stars",
+      "category": "finish",
+      "aspect": "16:9",
+      "prompt": "End-of-day scene — a single cyclist sitting on a stone bench at the Reistna kolonáda overlook at midnight, a glass of wine in hand, looking out over the dark Moravian vineyards under a starry sky with the Milky Way faintly visible. The colonnade columns rising softly behind. Quiet, contemplative"
     }
   ]
 }

@@ -19,14 +19,23 @@
       <div class="prerace-shell">
         <div class="step-pill">Krok 3 / 5 · Bidon</div>
         <h2 class="title-display">Namiešaj Isocarb</h2>
-        <p class="lead">Drž tlačidlo na liatie. <strong>Cieľ: po značku</strong> v hornej tretine. Pretečie = pomalšia výmena.</p>
+        <p class="lead">Drž tlačidlo na liatie. <strong>Cieľ pásmo</strong> = optimálna koncentrácia. Pretečie = mokrý dres.</p>
         <div class="bidon-stage">
           <div class="bidon-graphic" id="bidon-graphic">
             <img class="bidon-img" src="/assets/scenes/stations/item-bidon.png" alt="" />
-            <div class="bidon-fill" id="bidon-fill"></div>
-            <div class="bidon-target"></div>
+            <div class="bidon-pour" id="bidon-pour" aria-hidden="true"></div>
           </div>
-          <div class="bidon-readout"><span id="bidon-val">0.0</span> <small>L</small></div>
+          <div class="bidon-readout"><span id="bidon-val">0.00</span> <small>L</small></div>
+        </div>
+        <div class="bidon-gauge" id="bidon-gauge">
+          <div class="bidon-gauge-target"></div>
+          <div class="bidon-gauge-overflow"></div>
+          <div class="bidon-gauge-fill" id="bidon-gauge-fill"></div>
+          <div class="bidon-gauge-marks">
+            <span style="left:25%">0.25</span>
+            <span style="left:50%">0.50</span>
+            <span style="left:75%">0.75</span>
+          </div>
         </div>
         <button type="button" class="btn-pump" id="bidon-btn">Drž a lej</button>
         <div class="prerace-foot" id="bidon-foot">Cieľ je 0.55–0.70 L. Nepretekaj.</div>
@@ -47,14 +56,22 @@
 
   function tick() {
     timer = setInterval(() => {
-      if (!pouring || resolved) return;
-      level += 0.018;
-      if (level > 1.0) level = 1.0;
-      const fill = overlay.querySelector('#bidon-fill');
-      const val  = overlay.querySelector('#bidon-val');
-      fill.style.height = `${level * 100}%`;
+      if (resolved) return;
+      if (pouring) {
+        level += 0.018;
+        if (level > 1.0) level = 1.0;
+      }
+      const fill   = overlay.querySelector('#bidon-gauge-fill');
+      const val    = overlay.querySelector('#bidon-val');
+      const gfx    = overlay.querySelector('#bidon-graphic');
+      const pour   = overlay.querySelector('#bidon-pour');
+      fill.style.width = `${level * 100}%`;
       val.textContent = (level * 0.75).toFixed(2);
-      if (level >= 1.0) resolve();
+      /* Highlight bidon when in target zone */
+      gfx.classList.toggle('on-target', level >= TARGET_MIN && level <= TARGET_MAX);
+      gfx.classList.toggle('overflow',  level >= 0.92);
+      pour.style.opacity = pouring ? 1 : 0;
+      if (level >= 1.0 && pouring) resolve();
     }, 60);
   }
 
@@ -91,9 +108,10 @@
   async function enter() {
     build();
     level = 0; pouring = false; resolved = false;
-    overlay.querySelector('#bidon-fill').style.height = '0';
+    overlay.querySelector('#bidon-gauge-fill').style.width = '0';
     overlay.querySelector('#bidon-val').textContent = '0.00';
     overlay.querySelector('#bidon-foot').textContent = 'Cieľ je 0.55–0.70 L. Nepretekaj.';
+    overlay.querySelector('#bidon-graphic').classList.remove('on-target', 'overflow');
     overlay.classList.add('show');
     tick();
   }
