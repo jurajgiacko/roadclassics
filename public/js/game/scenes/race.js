@@ -46,12 +46,21 @@
     return (Math.atan2(y, x) * 180 / Math.PI + 360) % 360;
   }
 
-  /* Build a small DOM marker around a sprite image. */
+  /* Build a small DOM marker around a sprite image. We prefer the
+     chroma-keyed Data URL from rcSprites so the white background is
+     already stripped; fall back to the raw PNG if not yet cached. */
+  function spriteSrc(spriteId, fallbackPath) {
+    const url = window.rcSprites && window.rcSprites.getDataUrl
+              ? window.rcSprites.getDataUrl(spriteId)
+              : null;
+    return url || fallbackPath;
+  }
+
   function makeBikeMarker(spriteId, isPlayer) {
     const el = document.createElement('div');
     el.className = 'map-bike-marker' + (isPlayer ? ' map-player' : '');
     const img = document.createElement('img');
-    img.src = `/assets/scenes/characters/${spriteId}.png`;
+    img.src = spriteSrc(spriteId, `/assets/scenes/characters/${spriteId}.png`);
     img.alt = '';
     el.appendChild(img);
     return el;
@@ -61,10 +70,27 @@
     const el = document.createElement('div');
     el.className = 'map-station-marker';
     const img = document.createElement('img');
-    img.src = `/assets/scenes/stations/station-${type}.png`;
+    const id = `station-${type}`;
+    img.src = spriteSrc(id, `/assets/scenes/stations/${id}.png`);
     img.alt = '';
     el.appendChild(img);
     return el;
+  }
+
+  /* Preload sprites through rcSprites so chroma-key processing has
+     happened before we ask for getDataUrl. */
+  async function preloadSprites() {
+    if (!window.rcSprites || !window.rcSprites.preload) return;
+    if (!window.rcSprites.loadManifest) return;
+    /* Manifest is already loaded by scenes-bootstrap, but call it again
+       to be safe — it's idempotent (cached). */
+    await window.rcSprites.loadManifest('/assets/scenes/manifest.json');
+    await window.rcSprites.preload([
+      'cyclist-player-topdown',
+      'peloton-rider-1', 'peloton-rider-2', 'peloton-rider-3', 'peloton-rider-4',
+      'station-gel', 'station-bar', 'station-drink',
+      'station-jelly', 'station-chews', 'station-caffeine'
+    ]);
   }
 
   /* ---- Map init (one-time) ---- */
@@ -306,6 +332,11 @@
     if (window.rcEngine && !window.rcEngine.getState().monument) {
       await window.rcEngine.boot();
     }
+
+    /* Pre-load + chroma-key sprites BEFORE the map markers are created,
+       otherwise markers fall back to raw PNG with white backgrounds. */
+    try { await preloadSprites(); }
+    catch (e) { console.warn('[race] sprite preload partial', e); }
 
     /* Wait for the MapLibre global; falls through to a clear error after 8s */
     const ok = await ensureMapLibre();

@@ -1340,6 +1340,30 @@ body.race-active .game-stage { background: transparent; }
   font-size: 1rem;
   color: rgba(255,255,255,.86);
 }
+.landmark-card .lm-capture {
+  position: absolute;
+  bottom: calc(20px + env(safe-area-inset-bottom));
+  right: 20px;
+  z-index: 2;
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  background: rgba(228, 203, 157, 0.95);
+  color: var(--rc-primary);
+  border: none;
+  font-size: 1.4rem;
+  cursor: pointer;
+  pointer-events: auto;
+  opacity: 0;
+  transition: opacity .25s ease, transform .15s ease;
+  box-shadow: 0 8px 24px rgba(0,0,0,.5);
+}
+.landmark-card.show .lm-capture {
+  opacity: 1;
+  transition-delay: 0.6s;
+}
+.landmark-card .lm-capture:hover { transform: scale(1.08); }
+.landmark-card .lm-capture:active { transform: scale(0.95); }
 
 /* Route map preview */
 .scene-map .map-stage {

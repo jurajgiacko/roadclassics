@@ -93,6 +93,23 @@
     return cache.get(id) || blank;
   }
 
+  /* Return the cached asset as a PNG Data URL — useful when something
+     external (e.g. a MapLibre <img> marker) needs the chroma-keyed version
+     instead of the raw network PNG. */
+  function getDataUrl(id) {
+    const a = cache.get(id);
+    if (!a) return null;
+    try {
+      if (a.tagName === 'CANVAS') return a.toDataURL('image/png');
+      /* For raw images that didn't go through chroma-key, draw to canvas */
+      const c = document.createElement('canvas');
+      c.width = a.naturalWidth || a.width;
+      c.height = a.naturalHeight || a.height;
+      c.getContext('2d').drawImage(a, 0, 0);
+      return c.toDataURL('image/png');
+    } catch (e) { return null; }
+  }
+
   /* ---- Drawing helpers ---- */
 
   /* Cover-fit: scale image to fully cover (cx,cy,cw,ch) keeping aspect ratio.
@@ -184,7 +201,7 @@
   }
 
   window.rcSprites = {
-    setManifest, loadManifest, preload, load, get,
+    setManifest, loadManifest, preload, load, get, getDataUrl,
     drawCover, drawContain, drawCentered, drawHTile
   };
 })();

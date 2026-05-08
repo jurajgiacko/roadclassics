@@ -28,9 +28,109 @@
         <h3 class="lm-title" id="lm-title">…</h3>
         <p class="lm-sub" id="lm-sub">…</p>
       </div>
+      <button type="button" class="lm-capture" id="lm-capture" title="Stiahnuť ako wallpaper" aria-label="Stiahnuť ako wallpaper">📷</button>
     `;
     document.body.appendChild(card);
+    card.querySelector('#lm-capture').addEventListener('click', captureWallpaper);
     return card;
+  }
+
+  /* Generate a 1080×1920 mobile-wallpaper PNG from the current zone:
+     landscape illustration as cover, brand badge top, footer caption.
+     Triggers a download (or Web Share on mobile). */
+  let activeZone = null;
+  async function captureWallpaper(e) {
+    e.stopPropagation();
+    const zoneIdx = Math.max(0, ZONES.findIndex(z => z === activeZone));
+    const z = ZONES[zoneIdx] || ZONES[0];
+    const canvas = document.createElement('canvas');
+    canvas.width  = 1080;
+    canvas.height = 1920;
+    const ctx = canvas.getContext('2d');
+
+    /* Background: landscape illustration cover-fit */
+    const land = await loadImg(`/assets/scenes/landscapes/${z.art}.png`);
+    if (land) drawCover(ctx, land, 0, 0, 1080, 1920);
+
+    /* Wine wash overlay */
+    const wash = ctx.createLinearGradient(0, 0, 0, 1920);
+    wash.addColorStop(0,   'rgba(8,2,8,0.55)');
+    wash.addColorStop(0.4, 'rgba(8,2,8,0.15)');
+    wash.addColorStop(1,   'rgba(8,2,8,0.85)');
+    ctx.fillStyle = wash;
+    ctx.fillRect(0, 0, 1080, 1920);
+
+    /* Top badges */
+    const rcLogo = await loadImg('/assets/logos/rc_logo_horizontal_sb.svg');
+    const enLogo = await loadImg('/assets/logos/enervit_logo.svg');
+    if (rcLogo) ctx.drawImage(rcLogo, 60, 90, 280, 80);
+    if (enLogo) ctx.drawImage(enLogo, 720, 90, 280, 80);
+
+    /* Big "×" between logos */
+    ctx.fillStyle = '#e4cb9d';
+    ctx.font = '700 40px "Inter", sans-serif';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText('×', 540, 130);
+
+    /* Title block bottom */
+    ctx.fillStyle = '#f0d4a0';
+    ctx.font = '900 88px "Fraunces", Georgia, serif';
+    ctx.textAlign = 'center';
+    ctx.fillText(z.label, 540, 1620);
+
+    ctx.fillStyle = 'rgba(255,255,255,0.85)';
+    ctx.font = '500 32px "Inter", sans-serif';
+    ctx.fillText(z.subtitle, 540, 1690);
+
+    ctx.fillStyle = 'rgba(228,203,157,0.7)';
+    ctx.font = '700 24px "Inter", sans-serif';
+    ctx.letterSpacing = '0.2em';
+    ctx.fillText('PÁLAVA · ROAD CLASSICS 2026', 540, 1820);
+
+    /* Trigger download (or Web Share on mobile) */
+    canvas.toBlob(async (blob) => {
+      if (!blob) return;
+      const filename = `roadclassics-${z.art}.png`;
+      const file = new File([blob], filename, { type: 'image/png' });
+      if (navigator.canShare && navigator.canShare({ files: [file] })) {
+        try {
+          await navigator.share({
+            files: [file],
+            title: `Pálava · ${z.label}`,
+            text: 'Road Classics × Enervit'
+          });
+        } catch { /* cancelled */ }
+      } else {
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url; a.download = filename;
+        a.click();
+        setTimeout(() => URL.revokeObjectURL(url), 1500);
+      }
+      window.rcTrack && window.rcTrack('wallpaper_saved', { zone: z.art });
+    }, 'image/png');
+  }
+
+  function loadImg(src) {
+    return new Promise(res => {
+      const img = new Image();
+      img.onload = () => res(img);
+      img.onerror = () => res(null);
+      img.src = src;
+    });
+  }
+
+  function drawCover(ctx, img, x, y, w, h) {
+    const ar = img.width / img.height;
+    const target = w / h;
+    let dw, dh, dx, dy;
+    if (ar > target) {
+      dh = h; dw = h * ar; dx = x - (dw - w) / 2; dy = y;
+    } else {
+      dw = w; dh = w / ar; dx = x; dy = y - (dh - h) / 2;
+    }
+    ctx.drawImage(img, dx, dy, dw, dh);
   }
 
   /* Show a vignette for the given zone index. Pauses the race state,
@@ -38,6 +138,7 @@
   function show(idx, state) {
     const z = ZONES[idx];
     if (!z) return;
+    activeZone = z;
     buildCard();
     document.getElementById('lm-art').style.backgroundImage = `url('/assets/scenes/landscapes/${z.art}.png')`;
     document.getElementById('lm-kicker').textContent = `Zóna ${idx + 1} z ${ZONES.length}`;
