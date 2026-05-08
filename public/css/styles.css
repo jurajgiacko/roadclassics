@@ -502,19 +502,84 @@ body.game {
   max-width: 1400px;
   display: block;
   margin: 0 auto;
-  /* dark wine canvas — matches the @road__classics × @themartinpaseka illustration */
   background: linear-gradient(180deg, #170410 0%, #2c0814 55%, #45102a 100%);
   touch-action: manipulation;
-  /* 3D perspective tilt — turns the top-down view into a 3/4 diorama,
-     matching the Martin Paseka isometric IG illustration. The far side
-     of the canvas recedes; near side stays close. */
-  transform: perspective(1200px) rotateX(34deg);
-  transform-origin: 50% 78%;
-  transition: transform 0.4s ease;
 }
-@media (prefers-reduced-motion: reduce) {
-  #game-canvas { transform: none; }
+
+/* MapLibre race map — full-screen behind the HUD during race scene */
+#race-map {
+  position: fixed;
+  inset: 0;
+  z-index: 1;
+  display: none;
+  background: #170410;
 }
+body.race-active #race-map { display: block; }
+body.race-active #game-canvas { display: none; }
+body.race-active .game-stage { background: transparent; }
+
+/* MapLibre attribution: keep it tiny + corner */
+.maplibregl-ctrl-attrib {
+  font-size: 9px !important;
+  background: rgba(8,2,8,0.55) !important;
+  color: rgba(255,255,255,0.5) !important;
+}
+.maplibregl-ctrl-attrib a { color: rgba(255,255,255,0.6) !important; }
+
+/* Bike markers on the map */
+.map-bike-marker {
+  width: 56px;
+  height: 56px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+  filter: drop-shadow(0 4px 10px rgba(0,0,0,.6));
+  will-change: transform;
+}
+.map-bike-marker img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  /* keep image upright relative to map even as map rotates */
+}
+.map-bike-marker.map-player {
+  width: 72px;
+  height: 72px;
+  filter: drop-shadow(0 6px 16px rgba(229,55,71,0.55));
+}
+.map-bike-marker.map-player::after {
+  content: "";
+  position: absolute;
+  inset: -8px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(229,55,71,0.4), transparent 70%);
+  z-index: -1;
+  animation: player-pulse 2s ease-in-out infinite;
+}
+@keyframes player-pulse {
+  0%, 100% { transform: scale(1); opacity: 0.7; }
+  50%      { transform: scale(1.15); opacity: 1; }
+}
+.map-bike-marker.map-passed { animation: faded-pass 0.5s ease forwards; }
+@keyframes faded-pass {
+  0%   { transform: scale(1); }
+  100% { transform: scale(0.85); opacity: 0.65; }
+}
+
+/* Station markers (small Enervit tents on map) */
+.map-station-marker {
+  width: 38px;
+  height: 38px;
+  pointer-events: none;
+  filter: drop-shadow(0 4px 8px rgba(0,0,0,.5));
+}
+.map-station-marker img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+.map-station-marker.map-station-collected { opacity: 0.4; filter: grayscale(0.7); }
 
 .hud-top {
   display: grid;

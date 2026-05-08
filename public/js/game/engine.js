@@ -841,8 +841,10 @@
   }
 
   function getState() { return state; }
+  function getPeloton() { return peloton; }
+  function getProps() { return props; }
 
-  window.rcEngine = { boot, startRace, getState, monumentId };
+  window.rcEngine = { boot, startRace, getState, getPeloton, getProps, monumentId };
 
   /* Auto-boot for backwards compatibility: if no scene machine drives the
      game (e.g. someone opens game.html directly without scenes), still
