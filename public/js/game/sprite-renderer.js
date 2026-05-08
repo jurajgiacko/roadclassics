@@ -12,6 +12,44 @@
   blank.src =
     'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNgYAAAAAMAASsJTYQAAAAASUVORK5CYII=';
 
+  /* Sprites that need their off-white background stripped before
+     compositing on the gameplay landscape backdrop. Without this they
+     show as a square box behind the subject. */
+  const NEEDS_CHROMA = new Set([
+    'cyclist-player-topdown',
+    'peloton-rider-1', 'peloton-rider-2', 'peloton-rider-3', 'peloton-rider-4',
+    'station-gel', 'station-bar', 'station-drink',
+    'station-jelly', 'station-chews', 'station-caffeine'
+  ]);
+
+  /* Strip near-white pixels from the loaded image. Result is a canvas
+     element which drawImage accepts identically to an HTMLImageElement. */
+  function chromaKeyToCanvas(img) {
+    const c = document.createElement('canvas');
+    c.width = img.naturalWidth || img.width;
+    c.height = img.naturalHeight || img.height;
+    const cx = c.getContext('2d');
+    cx.drawImage(img, 0, 0);
+    let data;
+    try { data = cx.getImageData(0, 0, c.width, c.height); }
+    catch (e) { /* CORS-tainted, return raw */ return img; }
+    const px = data.data;
+    for (let i = 0; i < px.length; i += 4) {
+      const r = px[i], g = px[i + 1], b = px[i + 2];
+      const min = Math.min(r, g, b);
+      /* Pure off-white background → fully transparent */
+      if (r > 235 && g > 235 && b > 235) {
+        px[i + 3] = 0;
+      } else if (min > 215) {
+        /* Soft edge AA fade */
+        const t = (min - 215) / 20; // 0..1 over the soft band
+        px[i + 3] = Math.max(0, Math.floor(px[i + 3] * (1 - t)));
+      }
+    }
+    cx.putImageData(data, 0, 0);
+    return c;
+  }
+
   function load(id) {
     if (cache.has(id)) return Promise.resolve(cache.get(id));
     if (failed.has(id)) return Promise.resolve(blank);
@@ -24,7 +62,18 @@
     const url = `/assets/scenes/${meta.category}/${id}.png`;
     return new Promise((resolve) => {
       const img = new Image();
-      img.onload = () => { cache.set(id, img); resolve(img); };
+      /* Same-origin asset — no need for crossOrigin (which would require
+         explicit ACAO headers and could fail loading). */
+      img.onload = () => {
+        const finalAsset = NEEDS_CHROMA.has(id) ? chromaKeyToCanvas(img) : img;
+        /* expose width/height like Image for drawImage compatibility */
+        if (finalAsset.tagName === 'CANVAS') {
+          finalAsset.naturalWidth = finalAsset.width;
+          finalAsset.naturalHeight = finalAsset.height;
+        }
+        cache.set(id, finalAsset);
+        resolve(finalAsset);
+      };
       img.onerror = () => {
         failed.add(id);
         console.warn('[sprite] failed to load', url);
