@@ -581,6 +581,24 @@ body.race-active .game-stage { background: transparent; }
 }
 .map-station-marker.map-station-collected { opacity: 0.4; filter: grayscale(0.7); }
 
+/* Loading state for the map */
+.map-loading {
+  position: fixed;
+  inset: 0;
+  z-index: 5;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(8,2,8,0.78);
+  color: var(--rc-cream);
+  font-family: var(--font-display);
+  font-size: 1rem;
+  letter-spacing: .05em;
+  text-align: center;
+  padding: 20px;
+  backdrop-filter: blur(6px);
+}
+
 .hud-top {
   display: grid;
   grid-template-columns: auto 1fr auto;

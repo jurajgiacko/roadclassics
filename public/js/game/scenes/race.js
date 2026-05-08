@@ -76,6 +76,34 @@
     routeCoords = data.points.map(p => [p.lon, p.lat]);
   }
 
+  /* Wait for the MapLibre global with a short polling loop. The library
+     loads from unpkg via a normal <script> tag and may not be ready when
+     the race scene first enters, especially on slow mobile networks. */
+  async function ensureMapLibre(maxWaitMs = 8000) {
+    const start = performance.now();
+    while (!window.maplibregl) {
+      if (performance.now() - start > maxWaitMs) return false;
+      await new Promise(r => setTimeout(r, 80));
+    }
+    return true;
+  }
+
+  function showMapLoading(msg) {
+    let el = document.getElementById('map-loading');
+    if (!el) {
+      el = document.createElement('div');
+      el.id = 'map-loading';
+      el.className = 'map-loading';
+      document.body.appendChild(el);
+    }
+    el.textContent = msg;
+    el.style.display = 'flex';
+  }
+  function hideMapLoading() {
+    const el = document.getElementById('map-loading');
+    if (el) el.style.display = 'none';
+  }
+
   function initMap() {
     if (!window.maplibregl) {
       console.error('[race-map] maplibregl not loaded');
@@ -266,6 +294,7 @@
   async function enter() {
     hideAllPreraceOverlays();
     document.body.classList.add('race-active');
+    showMapLoading('Načítavam mapu Pálavy…');
 
     /* Load GPX once if needed */
     if (!routePoints.length) {
@@ -278,10 +307,28 @@
       await window.rcEngine.boot();
     }
 
+    /* Wait for the MapLibre global; falls through to a clear error after 8s */
+    const ok = await ensureMapLibre();
+    if (!ok) {
+      console.error('[race] MapLibre failed to load after 8s — falling back to canvas');
+      showMapLoading('Mapa sa nenačítala (skontroluj pripojenie). Pokračujem cez fallback…');
+      /* Drop race-active so canvas is visible again */
+      setTimeout(() => {
+        document.body.classList.remove('race-active');
+        hideMapLoading();
+      }, 1200);
+      showCountdown(() => window.rcEngine && window.rcEngine.startRace());
+      return;
+    }
+
     /* Init MapLibre once */
     if (!map) {
       map = initMap();
+      if (map) {
+        map.on('load', () => hideMapLoading());
+      }
     } else {
+      hideMapLoading();
       /* Reuse map; re-add markers if this isn't first time */
       map.flyTo({ center: routeCoords[0], zoom: 14.5, pitch: 55, bearing: 0, duration: 0 });
     }
