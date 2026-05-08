@@ -28,11 +28,26 @@
         <h3 class="lm-title" id="lm-title">…</h3>
         <p class="lm-sub" id="lm-sub">…</p>
       </div>
-      <button type="button" class="lm-capture" id="lm-capture" title="Stiahnuť ako wallpaper" aria-label="Stiahnuť ako wallpaper">📷</button>
+      <div class="lm-actions">
+        <button type="button" class="lm-btn lm-capture" id="lm-capture" title="Stiahnuť ako wallpaper" aria-label="Stiahnuť ako wallpaper">📷  Foto</button>
+        <button type="button" class="lm-btn lm-continue" id="lm-continue" aria-label="Pokračuj v race">Pokračuj →</button>
+      </div>
     `;
     document.body.appendChild(card);
     card.querySelector('#lm-capture').addEventListener('click', captureWallpaper);
+    card.querySelector('#lm-continue').addEventListener('click', dismissCard);
     return card;
+  }
+
+  /* Active state of the card so dismiss can resume the right paused flag */
+  let activeWasPaused = false;
+  let activeStateRef = null;
+  function dismissCard() {
+    if (!card) return;
+    card.classList.remove('show');
+    if (activeStateRef) {
+      setTimeout(() => { activeStateRef.paused = activeWasPaused; activeStateRef = null; }, 350);
+    }
   }
 
   /* Generate a 1080×1920 mobile-wallpaper PNG from the current zone:
@@ -133,8 +148,8 @@
     ctx.drawImage(img, dx, dy, dw, dh);
   }
 
-  /* Show a vignette for the given zone index. Pauses the race state,
-     fades in / holds / fades out, then resumes. */
+  /* Show a vignette for the given zone index. Pauses the race; the player
+     dismisses with the Pokračuj button (or 📷 to grab a wallpaper). */
   function show(idx, state) {
     const z = ZONES[idx];
     if (!z) return;
@@ -145,16 +160,11 @@
     document.getElementById('lm-title').textContent = z.label;
     document.getElementById('lm-sub').textContent = z.subtitle;
 
-    const wasPaused = state.paused;
+    activeWasPaused = state.paused;
+    activeStateRef = state;
     state.paused = true;
     card.classList.add('show');
     window.rcTrack && window.rcTrack('landmark_enter', { zone: idx, art: z.art });
-
-    setTimeout(() => {
-      card.classList.remove('show');
-      /* Resume the race after the vignette fades; preserve pre-existing pause if e.g. tactic modal is up */
-      setTimeout(() => { state.paused = wasPaused; }, 350);
-    }, 1700);
   }
 
   function tick(state) {

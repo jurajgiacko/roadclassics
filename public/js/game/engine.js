@@ -707,10 +707,10 @@
       state.speed += (targetSpeed - state.speed) * Math.min(1, dt * 3);
 
       /* Forward distance + progress */
-      /* Race duration target ~90s at speed=1.0; baseline 0.7 ⇒ ~130s,
-         frequent boosts pull it down to ~95-100 s actual playtime. */
-      state.distance += state.speed * 320 * dt;
-      state.progressPct = Math.min(100, state.progressPct + state.speed * (100 / 90) * dt);
+      /* Race duration target ~110s at speed=1.0 (15 % slower than the
+         previous 90 s pacing — better breathing room between landmarks). */
+      state.distance += state.speed * 272 * dt;
+      state.progressPct = Math.min(100, state.progressPct + state.speed * (100 / 106) * dt);
 
       /* Cadence + pedal animation */
       const targetCadence = pressing ? 110 : 90;

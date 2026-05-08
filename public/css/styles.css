@@ -644,13 +644,24 @@ body.race-active .game-stage { background: transparent; }
 }
 
 .hud-bottom {
-  padding: 16px;
+  padding: 12px 16px calc(12px + env(safe-area-inset-bottom));
   display: grid;
-  gap: 12px;
+  gap: 10px;
   grid-template-columns: 1fr 1fr;
-  background: linear-gradient(0deg, rgba(0,0,0,0.6), transparent);
+  background: linear-gradient(0deg, rgba(0,0,0,0.55), transparent);
   z-index: 5;
-  pointer-events: none; /* never block taps that should drive the bike */
+  pointer-events: none;
+}
+@media (max-width: 720px) {
+  .hud-bottom {
+    grid-template-columns: minmax(0, 220px) minmax(0, 220px);
+    justify-content: center;
+    gap: 8px;
+  }
+  .hud-bottom .gauge { padding: 8px 12px; }
+  .hud-bottom .gauge .value { font-size: 1.2rem; }
+  .hud-bottom .gauge .label { font-size: .62rem; }
+  .hud-bottom .cadence-zones { display: none; }
 }
 
 .gauge {
@@ -1340,30 +1351,43 @@ body.race-active .game-stage { background: transparent; }
   font-size: 1rem;
   color: rgba(255,255,255,.86);
 }
-.landmark-card .lm-capture {
+.landmark-card .lm-actions {
   position: absolute;
-  bottom: calc(20px + env(safe-area-inset-bottom));
+  bottom: calc(28px + env(safe-area-inset-bottom));
+  left: 20px;
   right: 20px;
   z-index: 2;
-  width: 56px;
-  height: 56px;
-  border-radius: 50%;
-  background: rgba(228, 203, 157, 0.95);
-  color: var(--rc-primary);
-  border: none;
-  font-size: 1.4rem;
+  display: flex;
+  gap: 12px;
+  justify-content: center;
+  flex-wrap: wrap;
+  opacity: 0;
+  transition: opacity .25s ease;
+}
+.landmark-card.show .lm-actions { opacity: 1; transition-delay: 0.5s; }
+.landmark-card .lm-btn {
+  font-family: inherit;
+  font-weight: 700;
+  font-size: 1rem;
+  padding: 14px 22px;
+  border-radius: 999px;
+  border: 2px solid transparent;
   cursor: pointer;
   pointer-events: auto;
-  opacity: 0;
-  transition: opacity .25s ease, transform .15s ease;
-  box-shadow: 0 8px 24px rgba(0,0,0,.5);
+  transition: transform .15s ease, background .15s ease;
+  box-shadow: 0 8px 22px rgba(0,0,0,.45);
+  min-width: 140px;
 }
-.landmark-card.show .lm-capture {
-  opacity: 1;
-  transition-delay: 0.6s;
+.landmark-card .lm-capture {
+  background: rgba(228, 203, 157, 0.95);
+  color: var(--rc-primary);
 }
-.landmark-card .lm-capture:hover { transform: scale(1.08); }
-.landmark-card .lm-capture:active { transform: scale(0.95); }
+.landmark-card .lm-continue {
+  background: var(--rc-energy);
+  color: #fff;
+}
+.landmark-card .lm-btn:hover { transform: translateY(-2px); }
+.landmark-card .lm-btn:active { transform: scale(0.97); }
 
 /* Route map preview */
 .scene-map .map-stage {
