@@ -23,80 +23,80 @@
   const ARCS = {
     /* recovery: PROSECCO + STYLE */
     'celebrate-attacker': [
-      { img: 'afterparty-cellar.png',  title: 'Vinotéka u sommeliéra',  body: 'Sommelier ťa pozná z pretekov a rozumie tvojmu solo úteku. Otvára Pálava Riesling z 2019. Bublinky stúpajú rýchlejšie ako tvoj puls na Děvíne.' },
-      { img: 'afterparty-music.png',   title: 'Cimbálovka & oslavné kola',body: 'Niekto pripije: „Na atak!" Cimbálovka strieda valčík za csardas. Tvoj víťazný nájazd dnes ešte raz, len v hudbe.' },
-      { img: 'afterparty-cheers.png',  title: 'Trofejný prípitok',       body: 'Diplom sa nedostal len peletónu — zarezal si vlastný pruh. Päť pohárov v strede stola. Tvoje meno padá v rozhovore.' },
-      { img: 'afterparty-stars.png',   title: 'Sám na vrchole',          body: 'Pred polnocou kráčaš ku kolonáde sám. Hviezdy svietia ako pri tvojom šprinte. <em>Vyhral si svoj ročník — aj keby si nikoho nepredbehol, vyhral si seba.</em>', finale: true }
+      { img: 'afterparty-cellar.png',  title: 'Vinotéka u sommeliéra',     body: 'Sommelier tě poznává ze závodu a rozumí tvému solo útěku. Otevírá Pálava Riesling z 2019. Bublinky stoupají rychleji než tvůj puls na Děvíně.' },
+      { img: 'afterparty-music.png',   title: 'Cimbálovka & oslavné kola', body: 'Někdo připije: „Na atak!" Cimbálovka střídá valčík za csardáš. Tvůj vítězný nájezd dnes ještě jednou, jen v hudbě.' },
+      { img: 'afterparty-cheers.png',  title: 'Trofejní přípitek',         body: 'Diplom se nedostal jen peletonu — zařízl jsi vlastní pruh. Pět skleniček uprostřed stolu. Tvoje jméno padá v rozhovoru.' },
+      { img: 'afterparty-stars.png',   title: 'Sám na vrcholu',            body: 'Před půlnocí kráčíš ke kolonádě sám. Hvězdy svítí jako při tvém sprintu. <em>Vyhrál jsi svůj ročník — i kdybys nikoho nepředjel, vyhrál jsi sebe.</em>', finale: true }
     ],
     'celebrate-tempar': [
-      { img: 'afterparty-cellar.png',  title: 'Vinotéka v skupine',      body: 'Schádzaš s peletónom pod klenbu. Bublinky cinkajú, niekto rozdáva fotky z dnešnej Reistny. Si jedným z mnohých — a to je dobré.' },
-      { img: 'afterparty-music.png',   title: 'Tanec spoločne',          body: 'Cimbálovka hrá, peletón sa drží v kruhu. Ako celý deň — radosť zdieľaná je dvojnásobná.' },
-      { img: 'afterparty-cheers.png',  title: 'Toast za team',           body: '„Na ďalší rok!" prevoláva niekto. Sklá štrnknú. Tvoje sedieť-na-kolesá strategia ti dnes priniesla nielen čas, ale aj kamarátov.' },
-      { img: 'afterparty-stars.png',   title: 'Tichý záver',             body: 'Pri kolonáde si naznačíš pohár. Hviezdy. Ticho. <em>Nie každý monument musí byť výhra. Niekedy stačí prísť — s ostatnými.</em>', finale: true }
+      { img: 'afterparty-cellar.png',  title: 'Vinotéka ve skupině',       body: 'Scházíš s peletonem pod klenbu. Bublinky cinkají, někdo rozdává fotky z dnešní Reistny. Jsi jedním z mnoha — a to je dobré.' },
+      { img: 'afterparty-music.png',   title: 'Tanec společně',            body: 'Cimbálovka hraje, peleton se drží v kruhu. Jako celý den — sdílená radost je dvojnásobná.' },
+      { img: 'afterparty-cheers.png',  title: 'Toast za tým',              body: '„Na další rok!" volá někdo. Skla cinknou. Tvá strategie sedět-na-kolesech ti dnes přinesla nejen čas, ale i kamarády.' },
+      { img: 'afterparty-stars.png',   title: 'Tichý závěr',               body: 'U kolonády si jen naznačíš sklenku. Hvězdy. Ticho. <em>Ne každý monument musí být výhra. Někdy stačí přijet — s ostatními.</em>', finale: true }
     ],
     'celebrate-fueler': [
-      { img: 'afterparty-cellar.png',  title: 'Vinotéka & čerstvé sily', body: 'Tvoja stratégia plnenia tres-ky sa vyplatila — máš ešte energiu dopiť celú fľašu. Sommelier dvíha obočie nad tvojou výdržou.' },
-      { img: 'afterparty-cheers.png',  title: 'Spoznaný energetický mág',body: 'Pri stole padajú otázky: „Ktorý gel pred Reistnou? Caffeine?" Ty si prikývol. Tvoja schopnosť dávkovať ti dnes priniesla viac ako svaly.' },
-      { img: 'afterparty-music.png',   title: 'Tanec s vínom',           body: 'Hraje sa folklór, ty si to vychutnávaš. Dnes ťa neporazila energy, ani víno ťa neporazí.' },
-      { img: 'afterparty-stars.png',   title: 'Zaslúžená vyhliadka',     body: 'Stojíš pri kolonáde s posledným pohárom. <em>Niektorí sú silní v nohách. Ty si silný v plánovaní.</em>', finale: true }
+      { img: 'afterparty-cellar.png',  title: 'Vinotéka & čerstvé síly',   body: 'Tvoje strategie plnění kapes se vyplatila — máš ještě energii dopít celou láhev. Sommelier zvedá obočí nad tvou výdrží.' },
+      { img: 'afterparty-cheers.png',  title: 'Energetický mág',           body: 'U stolu padají otázky: „Který gel před Reistnou? Caffeine?" Ty kýveš. Tvoje schopnost dávkovat ti dnes přinesla víc než svaly.' },
+      { img: 'afterparty-music.png',   title: 'Tanec s vínem',             body: 'Hraje folklór, ty si to vychutnáváš. Dnes tě neporazila energy, víno tě taky neporazí.' },
+      { img: 'afterparty-stars.png',   title: 'Zasloužený výhled',         body: 'Stojíš u kolonády s posledním pohárem. <em>Někteří jsou silní v nohách. Ty jsi silný v plánování.</em>', finale: true }
     ],
     'celebrate-taktik': [
-      { img: 'afterparty-cellar.png',  title: 'Pivnica — adaptívny štýl',body: 'Jeden moment pivo, druhý prosecco. Tvoja taktika dnes bola: čítaj situáciu. Aj večer čítaš.' },
-      { img: 'afterparty-music.png',   title: 'Cimbálovka & rozhovory',  body: 'Skáčeš medzi stolmi, vypočuješ si tri verzie dnešného šprintu. Tak ako si v race vyberal, tak vyberáš teraz.' },
-      { img: 'afterparty-cheers.png',  title: 'Univerzálny toast',       body: 'Pripijaš s každým za niečo iné. Niekto ti hovorí: „Si tam, kde by tě bylo třeba." Ty len kývneš.' },
-      { img: 'afterparty-stars.png',   title: 'Pri kolonáde',            body: 'Stojíš a premýšľaš o všetkých malých rozhodnutiach dňa. <em>Nemáš jeden štýl. Máš všetky.</em>', finale: true }
+      { img: 'afterparty-cellar.png',  title: 'Sklep — adaptivní styl',    body: 'Jeden moment pivo, druhý prosecco. Tvoje taktika dnes byla: čti situaci. Čteš ji i večer.' },
+      { img: 'afterparty-music.png',   title: 'Cimbálovka & rozhovory',    body: 'Skáčeš mezi stoly, vyslechneš tři verze dnešního sprintu. Jak jsi v race vybíral, tak vybíráš teď.' },
+      { img: 'afterparty-cheers.png',  title: 'Univerzální toast',         body: 'Připíjíš s každým za něco jiného. Někdo ti říká: „Jsi tam, kde by tě bylo třeba." Jen kývneš.' },
+      { img: 'afterparty-stars.png',   title: 'U kolonády',                body: 'Stojíš a přemýšlíš o všech malých rozhodnutích dne. <em>Nemáš jeden styl. Máš všechny.</em>', finale: true }
     ],
 
     /* recovery: PIVO + STYLE */
     'classic-attacker': [
-      { img: 'afterparty-cellar.png',  title: 'Pivnica & krígle',         body: 'Trafíš sa do pivnice cez všetky tie čerstvo zorané vinice. Pivo ide dole prvé bez problému. Atak na Děvín bol mladší ako toto pivo.' },
-      { img: 'afterparty-music.png',   title: 'Folklórna divočina',       body: 'Cimbálovka rozdrbe klasiku, ty kopíruješ kroky. Adrenalin z race ešte neopadol — premieta sa do stupy.' },
-      { img: 'afterparty-cheers.png',  title: 'Krígle na atak',           body: '„Na sólovú jazdu!" Päť krígľov sa stretne v strede. Pena tečie. Tvoj solo úsek dnes bol v záznamoch.' },
-      { img: 'afterparty-stars.png',   title: 'Tichý vrchol',             body: 'Kráčaš pri kolonáde, posledný hlt z fľaše. <em>Pivo je odmena tela. Kolonáda je odmena duše.</em>', finale: true }
+      { img: 'afterparty-cellar.png',  title: 'Sklep & půllitry',          body: 'Trefíš se do sklepa přes všechny ty čerstvě zorané vinice. Pivo jde dolů první bez problému. Atak na Děvín byl mladší než tohle pivo.' },
+      { img: 'afterparty-music.png',   title: 'Folklórní divočina',        body: 'Cimbálovka rozhodí klasiku, ty kopíruješ kroky. Adrenalin ze závodu ještě neopadl — promítá se do tance.' },
+      { img: 'afterparty-cheers.png',  title: 'Půllitry na atak',          body: '„Na sólovou jízdu!" Pět půllitrů se srazí uprostřed. Pěna teče. Tvůj solo úsek dnes byl v záznamech.' },
+      { img: 'afterparty-stars.png',   title: 'Tichý vrchol',              body: 'Kráčíš u kolonády, poslední doušek z lahve. <em>Pivo je odměna těla. Kolonáda je odměna duše.</em>', finale: true }
     ],
     'classic-tempar': [
-      { img: 'afterparty-cellar.png',  title: 'Pivnica — peletón celý',   body: 'Všetkých pätnásť čo si dnes držal v skupine sedí teraz okolo teba. Pivo cinká. Reči o tom, kto kedy zaberol.' },
-      { img: 'afterparty-music.png',   title: 'Tanec za rytmu',           body: 'Cimbálovka, kolektívny tanec. Tak ako v race — chytené koleso, jeden rytmus. Aj večer.' },
-      { img: 'afterparty-cheers.png',  title: 'Klasický prípitok',        body: '„Bratrstvo silnice!" volá niekto. Krígle štrnknú. Si v tom najlepšom skupinovom feel-e v živote.' },
-      { img: 'afterparty-stars.png',   title: 'Posledný hltok',           body: 'Pri kolonáde s pivom v ruke. <em>Niekedy je vyhrať aj zostať s ostatnými.</em>', finale: true }
+      { img: 'afterparty-cellar.png',  title: 'Sklep — celý peleton',      body: 'Všech patnáct, co jsi dnes držel ve skupině, sedí teď kolem tebe. Pivo cinká. Řeči o tom, kdo kdy zabral.' },
+      { img: 'afterparty-music.png',   title: 'Tanec do rytmu',            body: 'Cimbálovka, kolektivní tanec. Jako v race — chycené kolo, jeden rytmus. I večer.' },
+      { img: 'afterparty-cheers.png',  title: 'Klasický přípitek',         body: '„Bratrstvo silnice!" volá někdo. Půllitry cinknou. Jsi v tom nejlepším skupinovém feel-u v životě.' },
+      { img: 'afterparty-stars.png',   title: 'Poslední doušek',           body: 'U kolonády s pivem v ruce. <em>Někdy je vyhrát i zůstat s ostatními.</em>', finale: true }
     ],
     'classic-fueler': [
-      { img: 'afterparty-cellar.png',  title: 'Pivnica & rozbory',        body: 'Pri stole rozoberáš s ostatnými, ktorý gel kedy. Pivo sa pije pomaly — analyzujete dnešok ako lab.' },
-      { img: 'afterparty-cheers.png',  title: 'Toast za stratégiu',       body: '„Na bilancovanie!" Pivo cinklo. Dnes nešlo o silu — o systém. To pochopil každý pri stole.' },
-      { img: 'afterparty-music.png',   title: 'Folklór & pokoj',          body: 'Hraje sa, ty kývаš hlavou. Plnú energy si si schoval na koniec — aj na večer.' },
-      { img: 'afterparty-stars.png',   title: 'Tichá kontrola',           body: 'Kolonáda, posledné pivo. <em>Nie všetci kompozeri ide o adrenalín. Niektorí sú o execution.</em>', finale: true }
+      { img: 'afterparty-cellar.png',  title: 'Sklep & rozbory',           body: 'U stolu rozebíráš s ostatními, který gel kdy. Pivo se pije pomalu — analyzujete dnešek jako laboratoř.' },
+      { img: 'afterparty-cheers.png',  title: 'Toast za strategii',        body: '„Na bilancování!" Pivo cinklo. Dnes nešlo o sílu — o systém. To pochopil každý u stolu.' },
+      { img: 'afterparty-music.png',   title: 'Folklór & klid',            body: 'Hraje, ty kýveš hlavou. Plnou energy sis schoval na konec — i na večer.' },
+      { img: 'afterparty-stars.png',   title: 'Tichá kontrola',            body: 'Kolonáda, poslední pivo. <em>Ne všichni jezdci jsou o adrenalin. Někteří jsou o execution.</em>', finale: true }
     ],
     'classic-taktik': [
-      { img: 'afterparty-cellar.png',  title: 'Pivnica & flexibilita',    body: 'Najprv s peletónom, potom solo. Aj večer si flexibilný — pivo s každou skupinkou.' },
-      { img: 'afterparty-music.png',   title: 'Tanec medzi stoly',        body: 'Cimbálovka pomalá, potom rýchla. Ty s ňou. Tak ako celý deň — citlivý na rytmus.' },
-      { img: 'afterparty-cheers.png',  title: 'Mix toast',                body: 'Pripiješ s útočníkmi, potom s tempařmi. Nikoho nepatríš naplno — a všetci ťa berú.' },
-      { img: 'afterparty-stars.png',   title: 'Stred sveta',              body: 'Pri kolonáde, pivo sa stratilo. <em>Nemáš jeden štýl. Máš dnes svoj deň.</em>', finale: true }
+      { img: 'afterparty-cellar.png',  title: 'Sklep & flexibilita',       body: 'Nejdřív s peletonem, pak solo. I večer jsi flexibilní — pivo s každou skupinkou.' },
+      { img: 'afterparty-music.png',   title: 'Tanec mezi stoly',          body: 'Cimbálovka pomalá, pak rychlá. Ty s ní. Jako celý den — citlivý na rytmus.' },
+      { img: 'afterparty-cheers.png',  title: 'Mix toast',                 body: 'Připíjíš s útočníky, pak s tempaři. Nikam nepatříš naplno — a všichni tě berou.' },
+      { img: 'afterparty-stars.png',   title: 'Střed světa',               body: 'U kolonády, pivo se ztratilo. <em>Nemáš jeden styl. Máš dnes svůj den.</em>', finale: true }
     ],
 
     /* recovery: R2 + STYLE */
     'pro-attacker': [
-      { img: 'afterparty-cellar.png',  title: 'R2 & rozbor v pivnici',    body: 'Sediš so svojím R2 shake-rom uprostred peletónu. Bobby nebude piť. Profesionálny reštart, ako Pidcock po Strade.' },
-      { img: 'afterparty-music.png',   title: 'Cimbálovka & pohľady',     body: 'Hraje sa folklor, ty si stranou. Tvoj solo atak dnes hovoril sám za seba. Nepotrebuješ to vykecať.' },
-      { img: 'afterparty-cheers.png',  title: 'Tichý prípitok vodou',     body: 'Sommelier ti naleje vodu s plátkom citróna. „Aj to je oslava." Cinkne sa. Pamätáš si dnešok dokonale jasno.' },
-      { img: 'afterparty-stars.png',   title: 'Kolonáda — vízia',         body: 'Stojíš pri kolonáde s tréningovým plánom v hlave. Dnes bol prvý monument. <em>Budeš sa vracať. A vyhrávať.</em>', finale: true }
+      { img: 'afterparty-cellar.png',  title: 'R2 & rozbor ve sklepě',     body: 'Sedíš se svým R2 shakerem uprostřed peletonu. Dnes nebudeš pít. Profesionální restart, jako Pidcock po Strade.' },
+      { img: 'afterparty-music.png',   title: 'Cimbálovka & pohledy',      body: 'Hraje folklór, ty stojíš stranou. Tvůj solo atak dnes mluvil sám za sebe. Nepotřebuješ to vykecávat.' },
+      { img: 'afterparty-cheers.png',  title: 'Tichý přípitek vodou',      body: 'Sommelier ti nalije vodu s plátkem citronu. „I to je oslava." Cinkne se. Pamatuješ si dnešek dokonale jasně.' },
+      { img: 'afterparty-stars.png',   title: 'Kolonáda — vize',           body: 'Stojíš u kolonády s tréninkovým plánem v hlavě. Dnes byl první monument. <em>Budeš se vracet. A vyhrávat.</em>', finale: true }
     ],
     'pro-tempar': [
-      { img: 'afterparty-cellar.png',  title: 'R2 & disciplína',          body: 'Peletón pije, ty máš shake. Disciplína dnes vyhrala v skupine — ostáva ti aj večer.' },
-      { img: 'afterparty-cheers.png',  title: 'Pripitok studenou vodou',  body: '„Profík," kýva niekto. Tvoja taktická trpezlivosť dnes a tvoja recovery dnes — dva roky tréningu zhutnené do jedného dňa.' },
-      { img: 'afterparty-music.png',   title: 'Folklór — pozorovateľ',    body: 'Hraje sa cimbál. Ty počítaš make-up na zajtrajšie tréningové intervaly.' },
-      { img: 'afterparty-stars.png',   title: 'Kolonáda — protokol',      body: 'Pri kolonáde stojíš a v hlave ti beží zajtrajší easy-spin. <em>Profík sa nenarodí. Vykuje sa.</em>', finale: true }
+      { img: 'afterparty-cellar.png',  title: 'R2 & disciplína',           body: 'Peleton pije, ty máš shake. Disciplína dnes vyhrála ve skupině — zůstává ti i večer.' },
+      { img: 'afterparty-cheers.png',  title: 'Přípitek studenou vodou',   body: '„Profík," kývá někdo. Tvá taktická trpělivost dnes a tvoje recovery dnes — dva roky tréninku zhuštěné do jednoho dne.' },
+      { img: 'afterparty-music.png',   title: 'Folklór — pozorovatel',    body: 'Hraje cimbál. Ty počítáš make-up na zítřejší tréninkové intervaly.' },
+      { img: 'afterparty-stars.png',   title: 'Kolonáda — protokol',       body: 'U kolonády stojíš a v hlavě ti běží zítřejší easy-spin. <em>Profík se nenarodí. Vykove se.</em>', finale: true }
     ],
     'pro-fueler': [
-      { img: 'afterparty-cellar.png',  title: 'R2 & dvojitý protokol',    body: 'Dvojitý win — perfektné palivo počas race + R2 po. Tvoj nutričný plán by mohli kúpiť tímy World Tour.' },
-      { img: 'afterparty-cheers.png',  title: 'Studená voda & rozbor',    body: '„Ktoré gely si bral?" pýta sa niekto. Vymenuješ. Stôl si robí poznámky.' },
-      { img: 'afterparty-music.png',   title: 'Folklór — focus',          body: 'Hraje sa cimbálovka, ty kontroluješ HRV na hodinkách. Recovery monitor je v zelenej.' },
-      { img: 'afterparty-stars.png',   title: 'Kolonáda — vedomé',        body: 'Pri kolonáde si vedomý každého procesu v tele. <em>Si stroj. Ale stroj ktorý vie.</em>', finale: true }
+      { img: 'afterparty-cellar.png',  title: 'R2 & dvojitý protokol',     body: 'Double win — perfektní palivo během race + R2 po. Tvůj nutriční plán by mohly koupit týmy World Tour.' },
+      { img: 'afterparty-cheers.png',  title: 'Studená voda & rozbor',     body: '„Které gely jsi bral?" ptá se někdo. Vyjmenuješ. Stůl si dělá poznámky.' },
+      { img: 'afterparty-music.png',   title: 'Folklór — focus',           body: 'Hraje cimbálovka, ty kontroluješ HRV na hodinkách. Recovery monitor je v zelené.' },
+      { img: 'afterparty-stars.png',   title: 'Kolonáda — vědomě',         body: 'U kolonády jsi vědomý každého procesu v těle. <em>Jsi stroj. Ale stroj, který ví.</em>', finale: true }
     ],
     'pro-taktik': [
-      { img: 'afterparty-cellar.png',  title: 'R2 & analýza',             body: 'Sledujеš ostatných pri pivách, popíjaš R2. Dnes si menil stratégiu trikrát — perfekta adaptácia.' },
-      { img: 'afterparty-music.png',   title: 'Cimbálovka — patterns',    body: 'Hudbu počúvaš ako power profile. Atak v 3. takte, recovery vo 4.' },
-      { img: 'afterparty-cheers.png',  title: 'Toast za execution',       body: 'Pripiješ vodou. „Niekedy je víťazstvo: rozhodnúť sa správne v správny moment." Stôl prikývne.' },
-      { img: 'afterparty-stars.png',   title: 'Kolonáda — meta-mode',     body: 'Stojíš a hodnotíš celý deň ako spectacle. <em>Vidíš veci, ktoré ostatní nevidia. Aj dnes. Aj zajtra.</em>', finale: true }
+      { img: 'afterparty-cellar.png',  title: 'R2 & analýza',              body: 'Sleduješ ostatní u piva, popíjíš R2. Dnes jsi měnil strategii třikrát — perfektní adaptace.' },
+      { img: 'afterparty-music.png',   title: 'Cimbálovka — patterns',     body: 'Hudbu posloucháš jako power profile. Atak ve 3. taktu, recovery ve 4.' },
+      { img: 'afterparty-cheers.png',  title: 'Toast za execution',        body: 'Připíjíš vodou. „Někdy je vítězství: rozhodnout se správně ve správný moment." Stůl přikývne.' },
+      { img: 'afterparty-stars.png',   title: 'Kolonáda — meta-mode',      body: 'Stojíš a hodnotíš celý den jako spectacle. <em>Vidíš věci, které ostatní nevidí. I dnes. I zítra.</em>', finale: true }
     ]
   };
 
@@ -140,13 +140,13 @@
     if (idx > 0) {
       const back = document.createElement('button');
       back.type = 'button'; back.className = 'btn btn-ghost';
-      back.textContent = '← Späť';
+      back.textContent = '← Zpět';
       back.addEventListener('click', () => { idx -= 1; render(j); });
       actions.appendChild(back);
     }
     const next = document.createElement('button');
     next.type = 'button'; next.className = 'btn btn-primary';
-    next.textContent = p.finale ? 'Ukončiť deň' : 'Ďalej →';
+    next.textContent = p.finale ? 'Ukončit den' : 'Dál →';
     next.addEventListener('click', () => {
       if (p.finale) finish(j);
       else { idx += 1; render(j); }

@@ -36,52 +36,52 @@
   "tactics": [
     {
       "trigger_pct": 22,
-      "context": "Lednice — pred prvou stúpačkou",
-      "subtext": "Roller cez vinice. Šetríš na Děvín?",
+      "context": "Lednice — před prvním stoupákem",
+      "subtext": "Roller přes vinice. Šetříš na Děvín?",
       "options": [
-        { "id": "attack",  "label": "Tlač do pelotonu",   "hint": "Zaberieš pozíciu",         "cost_energy": 12, "speed_mul": 1.20, "duration_s": 20 },
-        { "id": "draft",   "label": "Drž peloton",        "hint": "Šetrí energiu",            "cost_energy": -2, "speed_mul": 1.0,  "duration_s": 20 },
-        { "id": "refuel",  "label": "Carbo Gel C2:1PRO",  "hint": "+25 · príprava na Děvín",  "cost_energy": -25,"speed_mul": 0.95, "duration_s": 5  }
+        { "id": "attack",  "label": "Tlač do pelotonu",   "hint": "Zabereš pozici",            "cost_energy": 12, "speed_mul": 1.20, "duration_s": 20 },
+        { "id": "draft",   "label": "Drž peloton",        "hint": "Šetří energii",             "cost_energy": -2, "speed_mul": 1.0,  "duration_s": 20 },
+        { "id": "refuel",  "label": "Carbo Gel C2:1PRO",  "hint": "+25 · příprava na Děvín",   "cost_energy": -25,"speed_mul": 0.95, "duration_s": 5  }
       ]
     },
     {
       "trigger_pct": 38,
-      "context": "Mikulov — Děvín pred sebou",
-      "subtext": "Stúpanie 7.8 % · 4 km. Ako to dáš?",
+      "context": "Mikulov — Děvín před sebou",
+      "subtext": "Stoupání 7.8 % · 4 km. Jak to dáš?",
       "options": [
-        { "id": "attack",  "label": "Atak na Děvín",      "hint": "Rýchly, ale drahý",         "cost_energy": 22, "speed_mul": 1.30, "duration_s": 30 },
-        { "id": "draft",   "label": "Drž peloton",        "hint": "Skupinová sila",            "cost_energy": -3, "speed_mul": 1.0,  "duration_s": 30 },
-        { "id": "refuel",  "label": "Carbo Bar C2:1PRO",  "hint": "+35 · pomalý štart",         "cost_energy": -35,"speed_mul": 0.90, "duration_s": 4  }
+        { "id": "attack",  "label": "Atak na Děvín",      "hint": "Rychlý, ale drahý",          "cost_energy": 22, "speed_mul": 1.30, "duration_s": 30 },
+        { "id": "draft",   "label": "Drž peloton",        "hint": "Skupinová síla",             "cost_energy": -3, "speed_mul": 1.0,  "duration_s": 30 },
+        { "id": "refuel",  "label": "Carbo Bar C2:1PRO",  "hint": "+35 · pomalý start",         "cost_energy": -35,"speed_mul": 0.90, "duration_s": 4  }
       ]
     },
     {
       "trigger_pct": 56,
       "context": "Novomlýnské nádrže — rovinka",
-      "subtext": "Vietor od juhu. Sériová jazda alebo solo útek?",
+      "subtext": "Vítr od jihu. Skupinová jízda nebo solo útěk?",
       "options": [
-        { "id": "attack",  "label": "Solo útek",          "hint": "Vysoké riziko",              "cost_energy": 18, "speed_mul": 1.25, "duration_s": 25 },
-        { "id": "draft",   "label": "V skupine",          "hint": "Kryje ťa peloton",           "cost_energy": -4, "speed_mul": 1.0,  "duration_s": 25 },
-        { "id": "refuel",  "label": "Isocarb C2:1PRO",    "hint": "+30 · rýchle vstrebanie",   "cost_energy": -30,"speed_mul": 1.0,  "duration_s": 6  }
+        { "id": "attack",  "label": "Solo útěk",          "hint": "Vysoké riziko",              "cost_energy": 18, "speed_mul": 1.25, "duration_s": 25 },
+        { "id": "draft",   "label": "Ve skupině",         "hint": "Kryje tě peloton",           "cost_energy": -4, "speed_mul": 1.0,  "duration_s": 25 },
+        { "id": "refuel",  "label": "Carbo Jelly C2:1PRO","hint": "+30 · rychlé vstřebání",     "cost_energy": -30,"speed_mul": 1.0,  "duration_s": 6  }
       ]
     },
     {
       "trigger_pct": 78,
-      "context": "Pred Tesarovou pasťou",
-      "subtext": "Predposledné stúpanie. Reistna ťa ešte čaká.",
+      "context": "Před Tesarovou pastí",
+      "subtext": "Předposlední stoupání. Reistna tě ještě čeká.",
       "options": [
-        { "id": "attack",  "label": "Šprint na vrch",     "hint": "Strhni peloton",             "cost_energy": 22, "speed_mul": 1.30, "duration_s": 25 },
-        { "id": "draft",   "label": "Drž peloton",        "hint": "Trpezlivosť na Reistnu",    "cost_energy": -2, "speed_mul": 1.0,  "duration_s": 25 },
-        { "id": "refuel",  "label": "Isocarb + Gel",      "hint": "+40 · plný balíček",         "cost_energy": -40,"speed_mul": 0.90, "duration_s": 5  }
+        { "id": "attack",  "label": "Sprint na vrch",     "hint": "Strhni peloton",             "cost_energy": 22, "speed_mul": 1.30, "duration_s": 25 },
+        { "id": "draft",   "label": "Drž peloton",        "hint": "Trpělivost na Reistnu",      "cost_energy": -2, "speed_mul": 1.0,  "duration_s": 25 },
+        { "id": "refuel",  "label": "Liquid Gel + Chews", "hint": "+40 · plný balíček",         "cost_energy": -40,"speed_mul": 0.90, "duration_s": 5  }
       ]
     },
     {
       "trigger_pct": 91,
-      "context": "Reistna kolonáda — finálne stúpanie",
-      "subtext": "8.4 % · 1 km. Tvoj posledný moment.",
+      "context": "Reistna kolonáda — finální stoupání",
+      "subtext": "8.4 % · 1 km. Tvůj poslední moment.",
       "options": [
-        { "id": "attack",  "label": "All-in na vrchol",   "hint": "Vyhráš alebo prehráš",       "cost_energy": 28, "speed_mul": 1.40, "duration_s": 20 },
-        { "id": "draft",   "label": "Stabilný rytmus",    "hint": "Doviezeš v peletóne",       "cost_energy": 0,  "speed_mul": 1.05, "duration_s": 20 },
-        { "id": "refuel",  "label": "Carbo Gel — caffeine","hint": "+25 · ostrá káva",           "cost_energy": -25,"speed_mul": 1.10, "duration_s": 8  }
+        { "id": "attack",  "label": "All-in na vrchol",   "hint": "Vyhraješ nebo prohraješ",    "cost_energy": 28, "speed_mul": 1.40, "duration_s": 20 },
+        { "id": "draft",   "label": "Stabilní rytmus",    "hint": "Dojedeš v peletonu",         "cost_energy": 0,  "speed_mul": 1.05, "duration_s": 20 },
+        { "id": "refuel",  "label": "Carbo Gel — Caffeine","hint": "+25 · ostrá káva",          "cost_energy": -25,"speed_mul": 1.10, "duration_s": 8  }
       ]
     }
   ]

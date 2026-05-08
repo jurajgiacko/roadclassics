@@ -45,18 +45,18 @@
       <div class="prerace-shell">
         <div class="step-pill">Krok 4 / 5 · Tres</div>
         <h2 class="title-display">Naplň si dres</h2>
-        <p class="lead">Klepni produkt → klepni vrecko. <strong>Max 2 / vrecko.</strong> Vyvážená sada (gel + bar + drink) = max bonus.</p>
+        <p class="lead">Ťukni na produkt → ťukni na kapsu. <strong>Max 2 / kapsa.</strong> Vyvážená sada (gel + bar + jelly) = max bonus.</p>
         <div class="packing-stage">
           <div class="jersey">
-            <div class="pocket" data-i="0"><span class="lbl">L vrecko</span></div>
-            <div class="pocket" data-i="1"><span class="lbl">Stred</span></div>
-            <div class="pocket" data-i="2"><span class="lbl">P vrecko</span></div>
+            <div class="pocket" data-i="0"><span class="lbl">L kapsa</span></div>
+            <div class="pocket" data-i="1"><span class="lbl">Střed</span></div>
+            <div class="pocket" data-i="2"><span class="lbl">P kapsa</span></div>
           </div>
           <div class="tray" id="pack-tray"></div>
         </div>
-        <div class="prerace-foot" id="pack-hint">Tip: 1 banán + 1 gel + 1 drink dáva najvyrovnanejší boost.</div>
+        <div class="prerace-foot" id="pack-hint">Tip: 1 banán + 1 gel + 1 jelly dá nejvyrovnanější boost.</div>
         <button type="button" class="btn btn-primary" id="pack-confirm">Hotovo (0)</button>
-        <button type="button" class="btn btn-ghost" id="pack-reset">Vyprázdniť</button>
+        <button type="button" class="btn btn-ghost" id="pack-reset">Vyprázdnit</button>
       </div>
     `;
     document.body.appendChild(overlay);

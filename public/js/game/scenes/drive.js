@@ -12,11 +12,11 @@
     overlay.innerHTML = `
       <div class="bg-art" style="background-image:url('/assets/scenes/prerace/drive-to-start.png')"></div>
       <div class="prerace-shell">
-        <div class="step-pill">Krok 5 / 5 · Cesta na štart</div>
-        <h2 class="title-display">Valtice, námestí Svobody</h2>
+        <div class="step-pill">Krok 5 / 5 · Cesta na start</div>
+        <h2 class="title-display">Valtice, náměstí Svobody</h2>
         <p class="lead" id="drive-summary">…</p>
         <div class="prep-summary" id="prep-summary"></div>
-        <div class="prerace-foot">Štart o pár sekúnd…</div>
+        <div class="prerace-foot">Start za pár sekund…</div>
       </div>
     `;
     document.body.appendChild(overlay);
@@ -25,17 +25,18 @@
 
   function summarize(j) {
     const lines = [];
-    if (j.breakfast === 'eggs')      lines.push('• Praženica');
-    if (j.breakfast === 'oats')      lines.push('• Ovsená kaša');
+    if (j.breakfast === 'eggs')      lines.push('• Míchaná vejce');
+    if (j.breakfast === 'oats')      lines.push('• Ovesná kaše');
     if (j.breakfast === 'croissant') lines.push('• Croissant + espresso');
     if (j.bikeChecked) lines.push(`• Pneu ${j.tirePressure?.toFixed?.(1) || '?'} bar (+${j.tireBonus || 0}% rolling)`);
-    else               lines.push('• Pneu nedotiahnutá — risk defektu');
+    else               lines.push('• Pneu nedohuštěná — riziko defektu');
     if (j.bidonLevel != null) lines.push(`• Bidon ${j.bidonLevel.toFixed(2)} L Isocarb (+${j.bidonBonus || 0})`);
     const pl = j.pocketsLoaded || {};
     const pocketSummary = [pl.gel ? `${pl.gel}× gel` : null,
                            pl.bar ? `${pl.bar}× bar` : null,
-                           pl.drink ? `${pl.drink}× drink` : null].filter(Boolean).join(', ');
-    lines.push(`• V tres-ke: ${pocketSummary || 'prázdne!'} (+${j.packingBonus || 0} bonus)`);
+                           pl.drink ? `${pl.drink}× drink` : null,
+                           pl.banana ? `${pl.banana}× banán` : null].filter(Boolean).join(', ');
+    lines.push(`• V kapsách: ${pocketSummary || 'prázdné!'} (+${j.packingBonus || 0} bonus)`);
     return lines.join('<br/>');
   }
 
@@ -43,7 +44,7 @@
     build();
     const j = window.rcScenes.journey();
     overlay.querySelector('#drive-summary').innerHTML =
-      `Si v aute, na streche bicykel. Pred sebou 124 km Pálavy. Cieľ: Reistna kolonáda.`;
+      `Jsi v autě, na střeše kolo. Před sebou 124 km Pálavy. Cíl: Reistna kolonáda.`;
     overlay.querySelector('#prep-summary').innerHTML = summarize(j);
     overlay.classList.add('show');
 

@@ -10,28 +10,28 @@
     {
       id:    'espresso',
       label: 'Espresso',
-      sub:   '+5 energie · krátky kofeín boost',
+      sub:   '+5 energie · krátký kofein boost',
       img:   '/assets/scenes/stations/drink-espresso.png',
       energy: 5, boost: 1.10, dur: 12, time: 0,  score: 60
     },
     {
       id:    'cappuccino',
       label: 'Cappuccino',
-      sub:   '+12 energie · stredný boost · -3s čas',
+      sub:   '+12 energie · střední boost · -3s čas',
       img:   '/assets/scenes/stations/drink-cappuccino.png',
       energy: 12, boost: 1.08, dur: 18, time: 3, score: 80
     },
     {
       id:    'kolac',
       label: 'Koláček + káva',
-      sub:   '+25 energie · veľa kalórií · -8s čas',
+      sub:   '+25 energie · hodně kalorií · -8s čas',
       img:   '/assets/scenes/stations/pastry-kolac.png',
       energy: 25, boost: 1.0,  dur: 0,  time: 8, score: 110
     },
     {
       id:    'skip',
-      label: 'Skip — držím tempo',
-      sub:   'Žiadny stop, žiadny bonus',
+      label: 'Přeskočit — držím tempo',
+      sub:   'Žádný stop, žádný bonus',
       img:   null,
       energy: 0, boost: 1.0, dur: 0, time: 0, score: 0
     }
@@ -45,9 +45,9 @@
     overlay.innerHTML = `
       <div class="bg-art" style="background-image:url('/assets/scenes/stations/cafe-pavlov.png')"></div>
       <div class="prerace-shell">
-        <div class="step-pill">~50 % trate · Pavlov</div>
-        <h2 class="title-display">Pri vinici je kafáč</h2>
-        <p class="lead">Cyklisti sedia, niekto mocne zaberie do koláčika. Ideš zastaviť?</p>
+        <div class="step-pill">~50 % trasy · Pavlov</div>
+        <h2 class="title-display">U vinice je kavárna</h2>
+        <p class="lead">Cyklisté sedí, někdo se zakousne do koláčku. Stavíš se?</p>
         <div class="food-cards" id="cafe-cards">
           ${OPTIONS.map(o => `
             <button type="button" class="food-card${o.id === 'skip' ? ' food-skip' : ''}" data-id="${o.id}">
@@ -57,7 +57,7 @@
             </button>
           `).join('')}
         </div>
-        <div class="prerace-foot">5s na výber · default Skip</div>
+        <div class="prerace-foot">5s na výběr · default Přeskočit</div>
       </div>
     `;
     document.body.appendChild(overlay);

@@ -320,7 +320,7 @@
   async function enter() {
     hideAllPreraceOverlays();
     document.body.classList.add('race-active');
-    showMapLoading('Načítavam mapu Pálavy…');
+    showMapLoading('Načítám mapu Pálavy…');
 
     /* Load GPX once if needed */
     if (!routePoints.length) {
@@ -342,7 +342,7 @@
     const ok = await ensureMapLibre();
     if (!ok) {
       console.error('[race] MapLibre failed to load after 8s — falling back to canvas');
-      showMapLoading('Mapa sa nenačítala (skontroluj pripojenie). Pokračujem cez fallback…');
+      showMapLoading('Mapa se nenačetla (zkontroluj připojení). Pokračuji přes fallback…');
       /* Drop race-active so canvas is visible again */
       setTimeout(() => {
         document.body.classList.remove('race-active');

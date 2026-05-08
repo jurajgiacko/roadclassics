@@ -13,14 +13,14 @@
       <div class="intro-shell">
         <div class="kicker">Road Classics × Enervit</div>
         <h1 class="title-display">Pálava</h1>
-        <p class="lead">Tvoj cyklistický deň — od raňajok po Reistnu kolonádu. 124&nbsp;km, 968&nbsp;m prevýšenia, päť taktických rozhodnutí.</p>
+        <p class="lead">Tvůj cyklistický den — od snídaně po Reistnu kolonádu. 124&nbsp;km, 968&nbsp;m převýšení, pět taktických rozhodnutí.</p>
         <div class="intro-stats">
           <div><strong>124</strong><span>km</span></div>
           <div><strong>968</strong><span>m ↑</span></div>
           <div><strong>~2</strong><span>min hra</span></div>
         </div>
-        <button type="button" class="btn btn-primary big" id="intro-start">Začni svoj deň</button>
-        <a class="back" href="/">← späť na monumenty</a>
+        <button type="button" class="btn btn-primary big" id="intro-start">Začni svůj den</button>
+        <a class="back" href="/">← zpět na monumenty</a>
       </div>
     `;
     document.body.appendChild(overlay);

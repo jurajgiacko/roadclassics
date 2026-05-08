@@ -18,8 +18,8 @@
       <div class="bg-art" style="background-image:url('/assets/scenes/prerace/garage-bike-check.png')"></div>
       <div class="prerace-shell">
         <div class="step-pill">Krok 2 / 5 · Garáž</div>
-        <h2 class="title-display">Naplň pneumatiku</h2>
-        <p class="lead">Drž tlačidlo na pumpovanie. <strong>Cieľ ~8.5 bar</strong>. Pretlačíš → praskne, podtlačíš → defekt.</p>
+        <h2 class="title-display">Nahust pneumatiku</h2>
+        <p class="lead">Drž tlačítko na pumpování. <strong>Cíl ~8.5 bar</strong>. Přefoukneš → praskne, podfoukneš → defekt.</p>
         <div class="gauge-wrap">
           <div class="gauge-bar" id="gauge-bar">
             <div class="gauge-target"></div>
@@ -29,7 +29,7 @@
           <div class="gauge-readout"><span id="gauge-val">0.0</span> <small>bar</small></div>
         </div>
         <button type="button" class="btn-pump" id="pump-btn">Drž a pumpuj</button>
-        <div class="prerace-foot" id="garage-foot">Pust tlačidlo keď trafíš pásmo 8.0–9.0 bar.</div>
+        <div class="prerace-foot" id="garage-foot">Pusť tlačítko když trefíš pásmo 8.0–9.0 bar.</div>
       </div>
     `;
     document.body.appendChild(overlay);
@@ -71,17 +71,17 @@
     const j = window.rcScenes.journey();
     j.tirePressure = +pressure.toFixed(1);
     let outcome, bonus;
-    if (pressure >= 12)         { outcome = 'BUM! Praskla. Žiadny bonus.';                      bonus = 0;  j.bikeChecked = false; }
+    if (pressure >= 12)         { outcome = 'BUM! Praskla. Žádný bonus.';                      bonus = 0;  j.bikeChecked = false; }
     else if (pressure >= 8 && pressure <= 9.2) {
-      outcome = `Perfektných ${pressure.toFixed(1)} bar. +15 % rolling efficiency.`;
+      outcome = `Perfektních ${pressure.toFixed(1)} bar. +15 % rolling efficiency.`;
       bonus = 15; j.bikeChecked = true;
     } else if (pressure >= 7 && pressure < 8)  {
       outcome = `Trochu málo (${pressure.toFixed(1)} bar). +5 %.`;
       bonus = 5;  j.bikeChecked = true;
     } else if (pressure > 9.2 && pressure < 12) {
-      outcome = `Prepumpované (${pressure.toFixed(1)} bar). +5 %.`;
+      outcome = `Přefouknuto (${pressure.toFixed(1)} bar). +5 %.`;
       bonus = 5;  j.bikeChecked = true;
-    } else                       { outcome = `Nedotiahnuté ${pressure.toFixed(1)} bar — defekt risk.`;        bonus = 0;  j.bikeChecked = false; }
+    } else                       { outcome = `Podfouknuto ${pressure.toFixed(1)} bar — riziko defektu.`;        bonus = 0;  j.bikeChecked = false; }
 
     j.tireBonus = bonus;
     overlay.querySelector('#garage-foot').innerHTML = outcome;
@@ -98,7 +98,7 @@
     overlay.querySelector('#gauge-fill').style.width = '0';
     overlay.querySelector('#gauge-overload').style.width = '0';
     overlay.querySelector('#gauge-val').textContent = '0.0';
-    overlay.querySelector('#garage-foot').textContent = 'Pust tlačidlo keď trafíš pásmo 8.0–9.0 bar.';
+    overlay.querySelector('#garage-foot').textContent = 'Pusť tlačítko když trefíš pásmo 8.0–9.0 bar.';
     overlay.classList.add('show');
     loop();
   }

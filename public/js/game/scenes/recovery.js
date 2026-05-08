@@ -16,7 +16,7 @@
     {
       id:    'pivo',
       label: 'České pivo',
-      sub:   'Klasika po závode · regenerácia +30',
+      sub:   'Klasika po závodě · regenerace +30',
       img:   '/assets/scenes/finish/recovery-beer.png',
       mood:  'classic',
       bonus: 30
@@ -24,7 +24,7 @@
     {
       id:    'r2',
       label: 'Enervit R2 Recovery',
-      sub:   'Pro štýl · +60 recoveryBonus',
+      sub:   'Pro styl · +60 recoveryBonus',
       img:   '/assets/scenes/finish/recovery-r2.png',
       mood:  'pro',
       bonus: 60
@@ -39,9 +39,9 @@
     overlay.innerHTML = `
       <div class="bg-art" style="background-image:url('/assets/scenes/landscapes/reistna-kolonada.png')"></div>
       <div class="prerace-shell">
-        <div class="step-pill">Po cieli · Recovery</div>
-        <h2 class="title-display">Čím si pripomienku?</h2>
-        <p class="lead">Zaslúžiš si — ale aj to, čo si vyberieš teraz, ovplyvní ako sa cítiš večer.</p>
+        <div class="step-pill">V cíli · Recovery</div>
+        <h2 class="title-display">Čím si připomeneš?</h2>
+        <p class="lead">Zasloužíš si — ale i to, co si vybereš teď, ovlivní jak se cítíš večer.</p>
         <div class="food-cards" id="rec-cards">
           ${OPTIONS.map(o => `
             <button type="button" class="food-card" data-id="${o.id}">
@@ -51,7 +51,7 @@
             </button>
           `).join('')}
         </div>
-        <div class="prerace-foot">Voľba ovplyvní afterparty atmosféru.</div>
+        <div class="prerace-foot">Volba ovlivní afterparty atmosféru.</div>
       </div>
     `;
     document.body.appendChild(overlay);

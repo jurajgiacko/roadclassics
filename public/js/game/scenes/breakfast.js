@@ -5,9 +5,9 @@
 
   /* Each option = ID, label, illustrated card, energy bonus, tradeoff. */
   const OPTIONS = [
-    { id: 'eggs',      label: 'Praženica',          sub: '+10 energia · pomalé štartovanie',       bonus: 10, img: '/assets/scenes/prerace/food-eggs.png' },
-    { id: 'oats',      label: 'Ovsená kaša',        sub: '+15 energia · stabilný release',         bonus: 15, img: '/assets/scenes/prerace/food-oats.png' },
-    { id: 'croissant', label: 'Croissant + espresso', sub: '+5 energia · rýchly štart, kratší kop', bonus: 5,  img: '/assets/scenes/prerace/food-croissant.png' }
+    { id: 'eggs',      label: 'Míchaná vejce',        sub: '+10 energie · pomalý start',              bonus: 10, img: '/assets/scenes/prerace/food-eggs.png' },
+    { id: 'oats',      label: 'Ovesná kaše',          sub: '+15 energie · stabilní release',          bonus: 15, img: '/assets/scenes/prerace/food-oats.png' },
+    { id: 'croissant', label: 'Croissant + espresso', sub: '+5 energie · rychlý start, kratší kop',   bonus: 5,  img: '/assets/scenes/prerace/food-croissant.png' }
   ];
 
   function build() {
@@ -20,7 +20,7 @@
       <div class="prerace-shell">
         <div class="step-pill">Krok 1 / 5 · Ráno</div>
         <h2 class="title-display">Čím začneš?</h2>
-        <p class="lead">Pálava ťa nepustí na lacno. Vyber raňajky — každé jedlo ti dá rôzny štart.</p>
+        <p class="lead">Pálava tě nenechá levně. Vyber snídani — každé jídlo ti dá jiný start.</p>
         <div class="food-cards" id="bf-cards">
           ${OPTIONS.map(o => `
             <button type="button" class="food-card" data-id="${o.id}">
@@ -30,7 +30,7 @@
             </button>
           `).join('')}
         </div>
-        <div class="prerace-foot">Choice = trvalý bonus na trati. Nedá sa zmeniť.</div>
+        <div class="prerace-foot">Volba = trvalý bonus na trase. Nelze změnit.</div>
       </div>
     `;
     document.body.appendChild(overlay);

@@ -39,8 +39,8 @@
     active = tactic;
     state.paused = true;
 
-    els.ctx.textContent = tactic.context || 'Rozhodnutie';
-    els.title.textContent = tactic.context || 'Tvoj ťah';
+    els.ctx.textContent = tactic.context || 'Rozhodnutí';
+    els.title.textContent = tactic.context || 'Tvůj tah';
     els.sub.textContent = tactic.subtext || '';
 
     /* Build option buttons fresh each time */
@@ -132,7 +132,7 @@
     const sign = delta >= 0 ? '+' : '';
     const cls = delta >= 100 ? 'good' : (delta < 0 ? 'bad' : 'ok');
     el.className = 'tactic-incoming show ' + cls;
-    const label = isDefault ? 'Nerozhodol si — drž peloton' : opt.label;
+    const label = isDefault ? 'Nerozhodl jsi — drž peloton' : opt.label;
     el.innerHTML = `${label} <strong>${sign}${delta}</strong>`;
     setTimeout(() => el.classList.remove('show'), 2200);
   }
@@ -144,7 +144,7 @@
       const dist = t.trigger_pct - state.progressPct;
       if (!t.hinted && dist > 0 && dist < 4) {
         t.hinted = true;
-        showIncoming(`Rozhodnutie o chvíľu — ${t.context}`);
+        showIncoming(`Rozhodnutí za chvíli — ${t.context}`);
       }
       if (state.progressPct >= t.trigger_pct) {
         t.fired = true;

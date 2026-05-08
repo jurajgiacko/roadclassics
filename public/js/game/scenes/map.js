@@ -7,7 +7,7 @@
 
   /* Same 7 zones as landmarks.js — pinned on the map */
   const ZONES = [
-    { pct: 0,  label: 'Štart · Valtice',     emoji: '🏁' },
+    { pct: 0,  label: 'Start · Valtice',      emoji: '🏁' },
     { pct: 18, label: 'Lednice',              emoji: '🍇' },
     { pct: 32, label: 'Mikulov',              emoji: '🏰' },
     { pct: 45, label: 'Děvín 7.8 %',          emoji: '⛰' },
@@ -26,7 +26,7 @@
       <div class="prerace-shell">
         <div class="step-pill">Plán na dnes · 124 km</div>
         <h2 class="title-display">Trasa Pálava</h2>
-        <p class="lead">Reálny GPX zo žiadosti pretekov. 7 zón, 5 taktických rozhodnutí, jedno kafko niekde v polovici.</p>
+        <p class="lead">Reálný GPX ze závodního souboru. 7 zón, 5 taktických rozhodnutí, jedno kafe někde v polovině.</p>
         <div class="map-stage" id="map-stage">
           <svg id="map-svg" viewBox="0 0 600 400" preserveAspectRatio="xMidYMid meet">
             <path id="map-path" stroke="rgba(228,203,157,0.95)" stroke-width="2" fill="none" />
@@ -34,8 +34,8 @@
             <g id="map-pins"></g>
           </svg>
         </div>
-        <button type="button" class="btn btn-primary big" id="map-go">Idem na to →</button>
-        <div class="prerace-foot">Ďalšie po 6 sekundách</div>
+        <button type="button" class="btn btn-primary big" id="map-go">Jdu na to →</button>
+        <div class="prerace-foot">Pokračuje za 6 sekund</div>
       </div>
     `;
     document.body.appendChild(overlay);

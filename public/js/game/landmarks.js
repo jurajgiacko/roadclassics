@@ -5,13 +5,13 @@
 (function () {
   /* 7 zones along the Pálava 124 km route, each tied to one landscape PNG */
   const ZONES = [
-    { from: 0,  to: 12, art: 'valtice-morning',        label: 'Štart · Valtice',          subtitle: 'námestí Svobody, 11:00' },
-    { from: 12, to: 25, art: 'lednice-vineyards',      label: 'Vinice u Lednice',         subtitle: '~16 km · roller cez vinné rady' },
-    { from: 25, to: 38, art: 'mikulov-overlook',       label: 'Mikulov',                  subtitle: '~32 km · pred prvou stúpačkou' },
-    { from: 38, to: 50, art: 'devin-climb',            label: 'Stúpanie na Děvín',        subtitle: '~47 km · 7.8 % gradient' },
-    { from: 50, to: 65, art: 'novomlynske-reservoirs', label: 'Novomlýnské nádrže',       subtitle: '~62 km · vietor cez vodu' },
+    { from: 0,  to: 12, art: 'valtice-morning',        label: 'Start · Valtice',          subtitle: 'náměstí Svobody, 11:00' },
+    { from: 12, to: 25, art: 'lednice-vineyards',      label: 'Vinice u Lednice',         subtitle: '~16 km · roller přes vinné řady' },
+    { from: 25, to: 38, art: 'mikulov-overlook',       label: 'Mikulov',                  subtitle: '~32 km · před prvním stoupákem' },
+    { from: 38, to: 50, art: 'devin-climb',            label: 'Stoupání na Děvín',        subtitle: '~47 km · 7.8 % gradient' },
+    { from: 50, to: 65, art: 'novomlynske-reservoirs', label: 'Novomlýnské nádrže',       subtitle: '~62 km · vítr přes vodu' },
     { from: 65, to: 80, art: 'tesarova-past-pass',     label: 'Tesarova past',            subtitle: '~96 km · technický úsek' },
-    { from: 80, to: 100,art: 'reistna-kolonada',       label: 'Reistna kolonáda',         subtitle: '~110 km · finálne stúpanie' }
+    { from: 80, to: 100,art: 'reistna-kolonada',       label: 'Reistna kolonáda',         subtitle: '~110 km · finální stoupání' }
   ];
 
   let currentZone = -1;
@@ -29,7 +29,7 @@
         <p class="lm-sub" id="lm-sub">…</p>
       </div>
       <div class="lm-actions">
-        <button type="button" class="lm-btn lm-capture" id="lm-capture" title="Stiahnuť ako wallpaper" aria-label="Stiahnuť ako wallpaper">📷  Foto</button>
+        <button type="button" class="lm-btn lm-capture" id="lm-capture" title="Stáhnout jako wallpaper" aria-label="Stáhnout jako wallpaper">📷  Foto</button>
         <button type="button" class="lm-btn lm-continue" id="lm-continue" aria-label="Pokračuj v race">Pokračuj →</button>
       </div>
     `;

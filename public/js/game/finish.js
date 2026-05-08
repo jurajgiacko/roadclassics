@@ -38,6 +38,8 @@
     if (dominant === 'refuel') return { id: 'fueler',  label: 'Fueler',   glyph: '🥤' };
     return { id: 'tempař', label: 'Tempař', glyph: '⏱' };
   }
+  /* CZ-friendly substring lookups since we feed labels into existing
+     style modal — Tempař/Útočník/Fueler/Taktik are already CZ-compatible. */
 
   function computeScore(state) {
     /* Time bonus: <2:30 → 1500, 3:00 → 1000, 4:00 → 500, capped */
@@ -95,12 +97,13 @@
     const distanceKm = state.monument?.real?.long_km || 125;
     const pickupsTotal = (state.monument?.pickups || []).length;
 
-    els.ribbon.textContent = `${state.monument?.name || 'Monument'} dokončená`;
+    els.ribbon.textContent = `${state.monument?.name || 'Monument'} dokončena`;
     els.score.textContent = score.total;
     els.styleLabel.textContent = style.label;
     els.styleGlyph.textContent = style.glyph;
     els.time.textContent = fmtTime(state.elapsed);
     els.timeSub.textContent = `Časový bonus +${score.timeBonus}`;
+    /* "Energie" / "Závěrečný stav" labels live in game.html now */
     els.energy.textContent = `${Math.round(state.energy)} / 100`;
     els.energySub.textContent = `Energy bonus +${score.energyBonus}`;
     els.pickups.textContent = `${state.pickupsCollected || 0} / ${pickupsTotal}`;
@@ -110,11 +113,11 @@
     const pb = loadPB(state.monument?.id);
     if (!pb || score.total > pb.score) {
       savePB(state.monument?.id, { score: score.total, time: state.elapsed, when: Date.now() });
-      els.pb.textContent = pb ? `🏆 Nový rekord! Predtým ${pb.score} bodov.` : '🏆 Tvoj prvý záznam!';
+      els.pb.textContent = pb ? `🏆 Nový rekord! Předtím ${pb.score} bodů.` : '🏆 Tvůj první záznam!';
       els.pb.className = 'finish-pb new';
     } else {
       const diff = pb.score - score.total;
-      els.pb.textContent = `Osobný rekord: ${pb.score} bodov · pokus o ${diff} menej`;
+      els.pb.textContent = `Osobní rekord: ${pb.score} bodů · o ${diff} méně`;
       els.pb.className = 'finish-pb';
     }
 
@@ -139,14 +142,14 @@
 
   function shareScore(state) {
     const score = computeScore(state);
-    const text = `Pálava dokončená v ${fmtTime(state.elapsed)} — ${score.total} bodov. Road Classics × Enervit. Skús ma poraziť: ${location.origin}`;
+    const text = `Pálava dokončena v ${fmtTime(state.elapsed)} — ${score.total} bodů. Road Classics × Enervit. Zkus mě porazit: ${location.origin}`;
     if (navigator.share) {
       navigator.share({ title: 'Road Classics: The Climb', text, url: location.origin })
         .catch(() => {});
     } else {
       navigator.clipboard?.writeText(text).then(
-        () => alert('Skóre skopírované do schránky.'),
-        () => prompt('Skopíruj výsledok:', text)
+        () => alert('Skóre zkopírováno do schránky.'),
+        () => prompt('Zkopíruj výsledek:', text)
       );
     }
     window.rcTrack && window.rcTrack('share_clicked', { monument: state.monument?.id });

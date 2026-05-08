@@ -18,8 +18,8 @@
       <div class="bg-art" style="background-image:url('/assets/scenes/prerace/garage-bike-check.png'); opacity:.18"></div>
       <div class="prerace-shell">
         <div class="step-pill">Krok 3 / 5 · Bidon</div>
-        <h2 class="title-display">Namiešaj Isocarb</h2>
-        <p class="lead">Drž tlačidlo na liatie. <strong>Cieľ pásmo</strong> = optimálna koncentrácia. Pretečie = mokrý dres.</p>
+        <h2 class="title-display">Namíchej Isocarb</h2>
+        <p class="lead">Drž tlačítko a lij. <strong>Cílové pásmo</strong> = optimální koncentrace. Přeteče = mokrý dres.</p>
         <div class="bidon-stage">
           <div class="bidon-graphic" id="bidon-graphic">
             <img class="bidon-img" src="/assets/scenes/stations/item-bidon.png" alt="" />
@@ -37,8 +37,8 @@
             <span style="left:75%">0.75</span>
           </div>
         </div>
-        <button type="button" class="btn-pump" id="bidon-btn">Drž a lej</button>
-        <div class="prerace-foot" id="bidon-foot">Cieľ je 0.55–0.70 L. Nepretekaj.</div>
+        <button type="button" class="btn-pump" id="bidon-btn">Drž a lij</button>
+        <div class="prerace-foot" id="bidon-foot">Cíl je 0.55–0.70 L. Nepřetékej.</div>
       </div>
     `;
     document.body.appendChild(overlay);
@@ -83,19 +83,19 @@
     j.bidonLevel = +(level * 0.75).toFixed(2);
     let outcome, bonus;
     if (level >= TARGET_MIN && level <= TARGET_MAX) {
-      outcome = `Perfektne ${(level * 0.75).toFixed(2)} L. +20 hydrating bonus.`;
+      outcome = `Perfektně ${(level * 0.75).toFixed(2)} L. +20 hydrating bonus.`;
       bonus = 20;
     } else if (level > TARGET_MAX && level < 0.92) {
-      outcome = `Pretečené (${(level * 0.75).toFixed(2)} L). Pomalšie zrýchlenie. +5.`;
+      outcome = `Přeteklo (${(level * 0.75).toFixed(2)} L). Pomalejší zrychlení. +5.`;
       bonus = 5;
     } else if (level >= 1.0) {
-      outcome = `Pretieklo cez okraj — máš mokrý dres. 0 bonus.`;
+      outcome = `Přeteklo přes okraj — máš mokrý dres. 0 bonus.`;
       bonus = 0;
     } else if (level >= 0.3) {
       outcome = `Trochu málo (${(level * 0.75).toFixed(2)} L). +10.`;
       bonus = 10;
     } else {
-      outcome = `Skoro nič v bidone. 0 bonus.`;
+      outcome = `Skoro nic v bidonu. 0 bonus.`;
       bonus = 0;
     }
     j.bidonBonus = bonus;
@@ -110,7 +110,7 @@
     level = 0; pouring = false; resolved = false;
     overlay.querySelector('#bidon-gauge-fill').style.width = '0';
     overlay.querySelector('#bidon-val').textContent = '0.00';
-    overlay.querySelector('#bidon-foot').textContent = 'Cieľ je 0.55–0.70 L. Nepretekaj.';
+    overlay.querySelector('#bidon-foot').textContent = 'Cíl je 0.55–0.70 L. Nepřetékej.';
     overlay.querySelector('#bidon-graphic').classList.remove('on-target', 'overflow');
     overlay.classList.add('show');
     tick();
